@@ -18,9 +18,9 @@ shared PrecoroAPI.NavTableNested = () as table =>
             table_header,
             {
                 {"PurchaseOrdersList", "PurchaseOrdersList", PrecoroAPI.PurchaseOrdersList, "function", "function", "true"},
-                {"GetPurchaseOrdersByIDN", "GetPurchaseOrdersByIDN", PrecoroAPI.GetPurchaseOrdersByIDN, "function", "function", "true"}
-                //{"DocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true"},
-                //{"ItemCustomFields", "GetItemCustomFields", PrecoroAPI.GetItemCustomFields, "function", "function", "true"}
+                {"GetPurchaseOrdersByIDN", "GetPurchaseOrdersByIDN", PrecoroAPI.GetPurchaseOrdersByIDN, "function", "function", "true"},
+                {"DocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true"},
+                {"ItemCustomFields", "GetItemCustomFields", PrecoroAPI.GetItemCustomFields, "function", "function", "true"}
             }   
         )
     in
@@ -178,9 +178,10 @@ PrecoroAPI.GetDocumentCustomFields = () =>
         tb2 = toTable(tb1, 1),
         ExpandedOptions = Table.ExpandRecordColumn(tb2, "options", {"data"}, {"options.data"}),
         ExpandedOptionsData  = Table.ExpandListColumn(ExpandedOptions, "options.data"),
-        ExpandedOptionsData1 = Table.ExpandRecordColumn(ExpandedOptionsData, "options.data", {"id", "name", "code", "label", "level", "parent", "enable"}, {"options.data.id", "options.data.name", "options.data.code", "options.data.label", "options.data.level", "options.data.parent", "options.data.enable"})
+        ExpandedOptionsData1 = Table.ExpandRecordColumn(ExpandedOptionsData, "options.data", {"id", "name", "code", "label", "level", "parent", "enable"}, {"options.data.id", "options.data.name", "options.data.code", "options.data.label", "options.data.level", "options.data.parent", "options.data.enable"}),
+         #"Changed Type" = Table.TransformColumnTypes(ExpandedOptionsData1,{{"id", Int64.Type}, {"options.data.id", Text.Type}})
     in
-        ExpandedOptionsData1;
+        #"Changed Type";
 
 PrecoroAPI.GetItemCustomFields = () =>
     let
@@ -210,9 +211,10 @@ PrecoroAPI.GetItemCustomFields = () =>
             Table.AddColumn(#"Expanded options.data1", "CustomField", 
                 each Record.AddField(
                         Record.AddField([], [name] & "_Code", [options.data.code]),
-                    [name] & "_Name", [options.data.name]))
+                    [name] & "_Name", [options.data.name])),
+        #"Changed Type" = Table.TransformColumnTypes(#"Added Custom",{{"id", Int64.Type}, {"options.data.id", Text.Type}})
 in
-    #"Added Custom";
+    #"Changed Type";
 
 
 
@@ -224,8 +226,9 @@ PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
         #"Expanded dataDocumentCustomFields.data" = Table.ExpandListColumn(#"Removed Other Columns", "dataDocumentCustomFields.data"),
         #"Expanded dataDocumentCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded dataDocumentCustomFields.data", "dataDocumentCustomFields.data", {"value", "documentCustomField"}, {"CustomFields.value", "CustomFields.documentCustomField"}),
         #"Expanded CustomFields.documentCustomField" = Table.ExpandRecordColumn(#"Expanded dataDocumentCustomFields.data1", "CustomFields.documentCustomField", {"id"}, {"CustomFields.documentCustomField.id"}),
-        #"Changed Type" = Table.TransformColumnTypes(#"Expanded CustomFields.documentCustomField",{{"CustomFields.documentCustomField.id", Int64.Type}, {"CustomFields.value", Int64.Type}}),
+        #"Changed Type" = Table.TransformColumnTypes(#"Expanded CustomFields.documentCustomField",{{"CustomFields.documentCustomField.id", Int64.Type}, {"CustomFields.value", Text.Type}}),
         #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"CustomFields.documentCustomField.id", "CustomFields.value"}, cf_dim, {"id", "options.data.id"}, "Invoked Function", JoinKind.LeftOuter),
+        
         #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "Invoked Function", {"name", "options.data.name", "options.data.code"}, {"name", "options.data.name", "options.data.code"}),
         #"Added Custom" = 
             Table.AddColumn(#"Expanded Invoked Function", "CustomField", 
@@ -254,7 +257,7 @@ let
     #"Expanded items.data.dataProductCustomFields.data" = Table.ExpandListColumn(#"Expanded items.data.dataProductCustomFields", "items.data.dataProductCustomFields.data"),
     #"Expanded items.data.dataProductCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data", "items.data.dataProductCustomFields.data", {"value", "productCustomField"}, {"ProductCustomFields.value", "ProductCustomFields.productCustomField"}),
     #"Expanded ProductCustomFields.productCustomField" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data1", "ProductCustomFields.productCustomField", {"id"}, {"productCustomField.id"}),
-    #"Changed Type" = Table.TransformColumnTypes(#"Expanded ProductCustomFields.productCustomField",{{"ProductCustomFields.value", Int64.Type}, {"productCustomField.id", Int64.Type}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded ProductCustomFields.productCustomField",{{"ProductCustomFields.value", Text.Type}, {"productCustomField.id", Int64.Type}}),
     
     #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"productCustomField.id", "ProductCustomFields.value"}, cf_dim, {"id", "options.data.id"}, "ItemCustomFields", JoinKind.LeftOuter),
     #"Expanded ItemCustomFields" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"CustomField"}, {"CustomField"}),
