@@ -18,9 +18,9 @@ shared PrecoroAPI.NavTableNested = () as table =>
             table_header,
             {
                 {"PurchaseOrdersList", "PurchaseOrdersList", PrecoroAPI.PurchaseOrdersList, "function", "function", "true"},
-                {"GetPurchaseOrdersByIDN", "GetPurchaseOrdersByIDN", PrecoroAPI.GetPurchaseOrdersByIDN, "function", "function", "true"},
-                {"DocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true"},
-                {"ItemCustomFields", "GetItemCustomFields", PrecoroAPI.GetItemCustomFields, "function", "function", "true"}
+                {"GetPurchaseOrdersByIDN", "GetPurchaseOrdersByIDN", PrecoroAPI.GetPurchaseOrdersByIDN, "function", "function", "true"}
+                //{"DocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true"},
+                //{"ItemCustomFields", "GetItemCustomFields", PrecoroAPI.GetItemCustomFieldsExpand, "function", "function", "true"}
             }   
         )
     in
@@ -117,7 +117,7 @@ PrecoroAPI.PurchaseOrdersListImpl = (
             let 
                 a = 
                     if include_DocumentCustomFields 
-                    then PrecoroAPI.GetPurchaseOrdersWithCustomFields(ExpDocCustomFields) 
+                    then try PrecoroAPI.GetPurchaseOrdersWithCustomFields(ExpDocCustomFields)  otherwise ExpDocCustomFields 
                     else ExpDocCustomFields
             in a
 
@@ -146,7 +146,7 @@ PrecoroAPI.GetPurchaseOrdersByIDNImpl = (
             let 
                 a = 
                     if include_ItemsCustomFields 
-                    then PrecoroAPI.GetPurchaseOrdersWithCustomFieldsItems(tb) 
+                    then try PrecoroAPI.GetPurchaseOrdersWithCustomFieldsItems(tb) otherwise tb 
                     else tb
             in a
 
@@ -176,13 +176,19 @@ PrecoroAPI.GetDocumentCustomFields = () =>
             ),
 
         tb2 = toTable(tb1, 1),
+        
         ExpandedOptions = Table.ExpandRecordColumn(tb2, "options", {"data"}, {"options.data"}),
         ExpandedOptionsData  = Table.ExpandListColumn(ExpandedOptions, "options.data"),
         ExpandedOptionsData1 = Table.ExpandRecordColumn(ExpandedOptionsData, "options.data", {"id", "name", "code", "label", "level", "parent", "enable"}, {"options.data.id", "options.data.name", "options.data.code", "options.data.label", "options.data.level", "options.data.parent", "options.data.enable"}),
-         #"Changed Type" = Table.TransformColumnTypes(ExpandedOptionsData1,{{"id", Int64.Type}, {"options.data.id", Text.Type}})
-    in
-        #"Changed Type";
-
+        #"Changed Type" = Table.TransformColumnTypes(ExpandedOptionsData1,{{"id", Int64.Type}, {"options.data.id", Text.Type}}),
+        #"Expanded options.data.parent" = Table.ExpandRecordColumn(#"Changed Type", "options.data.parent", {"id"}, {"options.data.parent.id"}),
+        #"Removed Other Columns" = Table.SelectColumns(#"Expanded options.data.parent",{"id", "name", "options.data.id", "type", "options.data.name", "options.data.code", "options.data.level", "options.data.parent.id"}),
+        #"Changed Type1" = Table.TransformColumnTypes(#"Removed Other Columns",{{"options.data.parent.id", Int64.Type}}),
+        tb_to_buf = Table.Buffer(#"Changed Type1"),
+        #"Invoked Custom Function" = Table.AddColumn(tb_to_buf, "Hierarchy", each if [type]=1 then pChild(tb_to_buf, [options.data.id], [id], []) else null)
+in
+    #"Invoked Custom Function";
+      
 PrecoroAPI.GetItemCustomFields = () =>
     let
         endpoint = "itemcustomfields",
@@ -204,17 +210,24 @@ PrecoroAPI.GetItemCustomFields = () =>
             )
             ),
         tb2 = toTable(tb1, 1),
+        #"Changed Type" = Table.TransformColumnTypes(tb2, {{"id", Int64.Type}})
+in
+    #"Changed Type";
+
+PrecoroAPI.GetItemCustomFieldsExpand = () =>
+    let
+
+        tb2 = PrecoroAPI.GetItemCustomFields(),
+        
         #"Expanded options" = Table.ExpandRecordColumn(tb2, "options", {"data"}, {"options.data"}),
         #"Expanded options.data" = Table.ExpandListColumn(#"Expanded options", "options.data"),
         #"Expanded options.data1" = Table.ExpandRecordColumn(#"Expanded options.data", "options.data", {"id", "name", "code", "label", "level", "parent", "externalId", "enable"}, {"options.data.id", "options.data.name", "options.data.code", "options.data.label", "options.data.level", "options.data.parent", "options.data.externalId", "options.data.enable"}),
-        #"Added Custom" = 
-            Table.AddColumn(#"Expanded options.data1", "CustomField", 
-                each Record.AddField(
-                        Record.AddField([], [name] & "_Code", [options.data.code]),
-                    [name] & "_Name", [options.data.name])),
-        #"Changed Type" = Table.TransformColumnTypes(#"Added Custom",{{"id", Int64.Type}, {"options.data.id", Text.Type}})
+        #"Expanded options.data.parent" = Table.ExpandRecordColumn(#"Expanded options.data1", "options.data.parent", {"id"}, {"options.data.parent.id"}),
+        #"Changed Type" = Table.TransformColumnTypes(#"Expanded options.data.parent",{{"id", Int64.Type}, {"options.data.id", Text.Type},{"options.data.parent.id", Int64.Type}}),
+        to_buf = Table.Buffer(#"Changed Type"),
+        #"Invoked Custom Function" = Table.AddColumn(to_buf, "Hierarchy", each  if [type]=1 then pChild(to_buf, [options.data.id], [id], []) else null)
 in
-    #"Changed Type";
+    #"Invoked Custom Function";
 
 
 
@@ -224,18 +237,28 @@ PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
         doc = doc_tb,
         #"Removed Other Columns" = Table.SelectColumns(doc,{"id", "dataDocumentCustomFields.data"}),
         #"Expanded dataDocumentCustomFields.data" = Table.ExpandListColumn(#"Removed Other Columns", "dataDocumentCustomFields.data"),
-        #"Expanded dataDocumentCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded dataDocumentCustomFields.data", "dataDocumentCustomFields.data", {"value", "documentCustomField"}, {"CustomFields.value", "CustomFields.documentCustomField"}),
+        #"Expanded dataDocumentCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded dataDocumentCustomFields.data", "dataDocumentCustomFields.data", {"value", "documentCustomField", "type"}, {"CustomFields.value", "CustomFields.documentCustomField", "CustomFields.type"}),
         #"Expanded CustomFields.documentCustomField" = Table.ExpandRecordColumn(#"Expanded dataDocumentCustomFields.data1", "CustomFields.documentCustomField", {"id"}, {"CustomFields.documentCustomField.id"}),
         #"Changed Type" = Table.TransformColumnTypes(#"Expanded CustomFields.documentCustomField",{{"CustomFields.documentCustomField.id", Int64.Type}, {"CustomFields.value", Text.Type}}),
-        #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"CustomFields.documentCustomField.id", "CustomFields.value"}, cf_dim, {"id", "options.data.id"}, "Invoked Function", JoinKind.LeftOuter),
         
-        #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "Invoked Function", {"name", "options.data.name", "options.data.code"}, {"name", "options.data.name", "options.data.code"}),
+        add_key_val = Table.AddColumn( #"Changed Type", "CustomFields.value_key", each if [CustomFields.type]=1 then [CustomFields.value] else null ),
+        #"Merged Queries" = Table.NestedJoin(add_key_val, {"CustomFields.documentCustomField.id", "CustomFields.value_key"}, cf_dim, {"id", "options.data.id"}, "Invoked Function", JoinKind.LeftOuter),
+
+        //select_step
+
+        #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "Invoked Function", {"name", "options.data.name", "options.data.code", "Hierarchy"}, {"name", "options.data.name", "options.data.code", "Hierarchy"}),
         #"Added Custom" = 
             Table.AddColumn(#"Expanded Invoked Function", "CustomField", 
-                each Record.AddField(
-                        Record.AddField([], [name] & "_Code", [options.data.code]),
-                    [name] & "_Name", [options.data.name])),
-        #"Removed Columns" = Table.RemoveColumns(#"Added Custom",{"CustomFields.value", "CustomFields.documentCustomField.id", "name", "options.data.name", "options.data.code"}),
+                each
+                    if [CustomFields.value_key] is null 
+                    then Record.AddField([], [name], [CustomFields.value] )
+                    else Record.AddField([],
+                            //Record.AddField(
+                                //Record.AddField([], [name] & "_Code", [options.data.code] )
+                            //,[name] & "_Name", [options.data.name])
+                        [name] & "_Hierarchy", [Hierarchy])
+                    ),
+        #"Removed Columns" = Table.RemoveColumns(#"Added Custom",{"CustomFields.value", "CustomFields.documentCustomField.id", "name", "options.data.name", "options.data.code", "CustomFields.value_key", "Hierarchy"}),
         #"Grouped Rows" = Table.Group(#"Removed Columns", {"id"}, {{"CustomFields", each try Record.Combine(_[CustomField]) otherwise [] , type record }}),
         
         #"MergedToDoc" = Table.NestedJoin(doc, {"id"}, #"Grouped Rows", {"id"}, "CustomFieldsRec", JoinKind.LeftOuter),
@@ -246,8 +269,8 @@ PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
 PrecoroAPI.GetPurchaseOrdersWithCustomFieldsItems = (doc_tb as table) =>
 let
     #"Invoked FunctionGetPurchaseOrdersByIDN1" = doc_tb,
-    cf_dim = PrecoroAPI.GetItemCustomFields(),
-
+    cf_dim = PrecoroAPI.GetItemCustomFieldsExpand(),
+    cf_dim0 = PrecoroAPI.GetItemCustomFields(),
     #"Removed Other Columns" = Table.SelectColumns(#"Invoked FunctionGetPurchaseOrdersByIDN1",{"id", "items"}),
     #"Expanded items" = Table.ExpandRecordColumn(#"Removed Other Columns", "items", {"data"}, {"items.data"}),
     #"Expanded items.data" = Table.ExpandListColumn(#"Expanded items", "items.data"),
@@ -259,9 +282,33 @@ let
     #"Expanded ProductCustomFields.productCustomField" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data1", "ProductCustomFields.productCustomField", {"id"}, {"productCustomField.id"}),
     #"Changed Type" = Table.TransformColumnTypes(#"Expanded ProductCustomFields.productCustomField",{{"ProductCustomFields.value", Text.Type}, {"productCustomField.id", Int64.Type}}),
     
-    #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"productCustomField.id", "ProductCustomFields.value"}, cf_dim, {"id", "options.data.id"}, "ItemCustomFields", JoinKind.LeftOuter),
-    #"Expanded ItemCustomFields" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"CustomField"}, {"CustomField"}),
-    #"Grouped Rows" = Table.Group(#"Expanded ItemCustomFields", {"id", "items.data.id", "items.data - Copy"}, {{"CustomFields", each try Record.Combine(_[CustomField]) otherwise [] , type record }}),
+    #"Merged Type" = Table.NestedJoin(#"Changed Type", {"productCustomField.id"}, cf_dim0, {"id"}, "ItemCustomFieldsType", JoinKind.LeftOuter),
+    #"ExpandedType" = Table.ExpandTableColumn(#"Merged Type", "ItemCustomFieldsType", {"type"}, {"ProductCustomFields.type"}),
+    #"Changed Type1" = Table.TransformColumnTypes( #"ExpandedType",{{"ProductCustomFields.type", Int64.Type}}),
+    add_key_val = Table.AddColumn(#"Changed Type1", "ProductCustomFields.value_key", each if [ProductCustomFields.type]=1 then [ProductCustomFields.value] else null ),
+    #"Changed Type2" = Table.TransformColumnTypes( add_key_val,{{"ProductCustomFields.value_key", Text.Type}}),
+
+    #"Merged Queries" = Table.NestedJoin(#"Changed Type2", {"productCustomField.id", "ProductCustomFields.value_key"}, cf_dim, {"id", "options.data.id"}, "ItemCustomFields", JoinKind.LeftOuter),
+    #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"name", "options.data.name", "options.data.code", "Hierarchy"}, {"name", "options.data.name", "options.data.code", "Hierarchy"}),
+    
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    #"Added CustomField" = 
+        Table.AddColumn(#"Expanded Invoked Function", "CustomField", 
+          each
+               if [ProductCustomFields.value_key] is null 
+               then Record.AddField([], [name], [ProductCustomFields.value] )
+               else
+               Record.AddField([],
+                    //Record.AddField(
+                        //Record.AddField([], [name] & "_Code", [options.data.code]),
+                    //[name] & "_Name", [options.data.name]),
+               [name] & "_Hierarchy", [Hierarchy])
+        ),
+               
+    //#"Expanded ItemCustomFields" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"CustomField"}, {"CustomField"}),
+    #"Grouped Rows" = Table.Group(#"Added CustomField", {"id", "items.data.id", "items.data - Copy"}, {{"CustomFields", each try Record.Combine(_[CustomField]) otherwise [] , type record }}),
     #"Added Custom" = Table.AddColumn(#"Grouped Rows", "data", each Record.AddField([#"items.data - Copy"], "ItemCustomFields", [CustomFields])),
     #"Removed Columns" = Table.RemoveColumns(#"Added Custom",{"items.data - Copy", "CustomFields", "items.data.id"}),
     #"Grouped Rows1" = Table.Group(#"Removed Columns", {"id"}, {{"items", each _[data], type list }}),
@@ -365,8 +412,24 @@ fCheckNullList = (rec as record) =>
                 {"budget",       each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
                 {"approvalStep", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
                 {"approvingWay", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
-                {"lastApprover", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ }
+                {"lastApprover", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"lastEditor",   each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ }
             }
             ,MissingField.Ignore )
     in
         rec;
+
+
+pChild = (tb as table, parent_id as any, id as any, res as record) => 
+    let
+        s1 = Table.ToRecords(Table.SelectRows(tb, each [options.data.id] = Text.From(parent_id) and [id]=id )){0},
+        name = Text.From(s1[name]),
+        lv = Text.From(s1[options.data.level]),
+        next_parent = Number.From(s1[options.data.parent.id]),
+        res_ = Record.AddField( 
+                    Record.AddField(res, name &"_Code_lv"& lv, s1[options.data.code]),
+                    name &"_Name_lv"& lv, s1[options.data.name]
+        )
+                    
+    in
+         if parent_id is null then res else @pChild(tb, next_parent, id, res_);
