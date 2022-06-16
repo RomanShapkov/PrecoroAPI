@@ -8,37 +8,316 @@ apikey = Extension.CurrentCredential()[Password];
 
 [DataSource.Kind="PrecoroAPI", Publish="PrecoroAPI.Publish"]
 
-shared PrecoroAPI.NavTableNested = () as table =>
+shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
     let
 
-        NavTable = (tb as table) => Table.ToNavigationTable(tb, {"Key"}, "Name", "Data", "ItemKind", "ItemName", "IsLeaf"),
-        table_header = {"Name", "Key", "Data", "ItemKind", "ItemName", "IsLeaf"},
+        NavTable = (tb as table) => Table.ToNavigationTable(tb, {"Name"}, "Name", "Data", "ItemKind", "ItemName", "IsLeaf", "sort") ,
+        table_header = {"Name", "Key", "Data", "ItemKind", "ItemName", "IsLeaf", "sort"},
+        
+        a = #table(table_header, 
+            {
+                {"Get Warehouse Requests list", "warehouserequests", PrecoroAPI.warehouserequests, "function", "function", "true", 1},
+                {"Get Warehouse Requests by IDN", "warehouserequestsByIDN", PrecoroAPI.warehouserequestsByIDN, "function", "function", "true", 2}
+             }),
+
+        b = #table(table_header, 
+            {
+                {"Get Purchase Requisitions list", "purchaserequisitions", PrecoroAPI.purchaserequisitions, "function", "function", "true", 1},
+                {"Get Purchase Requisitions by IDN", "purchaserequisitionsByIDN", PrecoroAPI.purchaserequisitionsByIDN, "function", "function", "true", 2}
+             }),
+
+
+        c = #table(table_header, 
+            {
+                {"Get Request For Proposals list", "requestforproposals", PrecoroAPI.requestforproposals, "function", "function", "true", 1},
+                {"Get Request For Proposals by IDN", "requestforproposalsByIDN", PrecoroAPI.requestforproposalsByIDN, "function", "function", "true", 2}
+             }),
+
+       d = #table(table_header, 
+            {
+                {"Get Purchase Orders list", "purchaseorders", PrecoroAPI.purchaseorders, "function", "function", "true", 1},
+                {"Get Purchase Orders by IDN", "purchaseordersByIDN", PrecoroAPI.purchaseordersByIDN, "function", "function", "true", 2}
+             }),
+
+       e = #table(table_header, 
+            {
+                {"Get Receipts list", "receipts", PrecoroAPI.receipts, "function", "function", "true", 1},
+                {"Get Receipts by IDN", "receiptsByIDN", PrecoroAPI.receiptsByIDN, "function", "function", "true", 2}
+             }),
+       f = #table(table_header, 
+            {
+                {"Get Invoices list", "invoices", PrecoroAPI.invoices, "function", "function", "true", 1},
+                {"Get invoices by IDN", "invoicesByIDN", PrecoroAPI.invoicesByIDN, "function", "function", "true", 2}
+             }),
+
+       g = #table(table_header, 
+            {
+                {"Payments", "invoices", PrecoroAPI.invoices, "function", "function", "true", 1}
+             }),
+
+       h = #table(table_header, 
+            {
+                {"Budgets", "budgets ", PrecoroAPI.budgets, "function", "function", "true", 1}
+             }),
+
+      
+       i0 = #table(table_header, 
+            {
+                {"Stock Transfers", "stocktransfers", PrecoroAPI.stocktransfers, "function", "function", "true", 1}
+             }),
+
+        
+       i = #table(table_header, 
+            {
+                {"Inventory", "Inventory ", NavTable(i0), "Table", "Table", "false", 1},
+                {"Get Stock-takings list", "stock_takings ", PrecoroAPI.stock_takings, "function", "function", "true", 2}
+                // {"Get Budgets list", "budgets ", PrecoroAPI.budgets, "function", "function", "true", 3}
+
+             }),
+//
+       o1 = #table(table_header, 
+            {
+                {"Get Suppliers list", "Get Suppliers list", PrecoroAPI.suppliers, "function", "function", "true", 1}
+
+             }),
+
+       o2 = #table(table_header, 
+            {
+                {"Get Items list", "Get Items list", PrecoroAPI.items, "function", "function", "true", 1}
+             }),
+
+      
+       o = #table(table_header, 
+            {
+                {"Suppliers and Items", "Suppliers and Items", NavTable(o1), "Table", "Table", "false", 1},
+                {"Item Management", "Item Management ",  NavTable(o2), "Table", "Table", "false", 2},
+                {"Get Units list", "Get Units list", PrecoroAPI.units, "function", "function", "true", 3},
+                {"Get Categories list", "Get Categories list", PrecoroAPI.categories, "function", "function", "true", 4}
+             }),
+
+       p = #table(table_header, 
+            {
+                {"Get Company Payment Terms list", "paymentterms ", PrecoroAPI.paymentterms, "function", "function", "true", 1}
+
+             }),
+
+       r1 = #table(table_header, 
+            {
+                {"Get Locations list", "locations ", PrecoroAPI.locations, "function", "function", "true", 1}
+
+             }),
+       r2 = #table(table_header, 
+            {
+                {"Get Users list", "users ", PrecoroAPI.users, "function", "function", "true", 1}
+
+             }),
+       r3 = #table(table_header, 
+            {
+                {"Get Item Сustom Fields list", "itemcustomfields ", PrecoroAPI.itemcustomfields, "function", "function", "true", 1}
+
+             }),
+       r4 = #table(table_header, 
+            {
+                {"Get Document Сustom Fields list", "documentcustomfields ", PrecoroAPI.documentcustomfields, "function", "function", "true", 1}
+
+             }),
+       r5 = #table(table_header, 
+            {
+                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1}
+
+             }),
+       r6 = #table(table_header, 
+            {
+                {"Get Warehouses list", "warehouses ", PrecoroAPI.warehouses, "function", "function", "true", 1}
+
+             }),
+       r7 = #table(table_header, 
+            {
+                {"Get Tax list", "taxes ", PrecoroAPI.taxes, "function", "function", "true", 1}
+
+             }),
+
+       r = #table(table_header, 
+            {
+                {"Locations", "Locations", NavTable(r1), "Table", "Table", "false", 1},
+                {"Users", "Users", NavTable(r2), "Table", "Table", "false", 2},
+                {"Item Сustom Fields", "Item Сustom Fields", NavTable(r3), "Table", "Table", "false", 3},
+                {"Document Сustom Fields", "Document Сustom Fields", NavTable(r4), "Table", "Table", "false", 4},
+                {"Legal Entities", "Legal Entities", NavTable(r5), "Table", "Table", "false", 5},
+                {"Inventory", "Inventory", NavTable(r6), "Table", "Table", "false", 6},
+                {"Taxes", "Taxes", NavTable(r7), "Table", "Table", "false", 7}
+             }),
+
 
         lv1 = #table(
             table_header,
             {
-                {"PurchaseOrdersList", "PurchaseOrdersList", PrecoroAPI.PurchaseOrdersList, "function", "function", "true"},
-                {"GetPurchaseOrdersByIDN", "GetPurchaseOrdersByIDN", PrecoroAPI.GetPurchaseOrdersByIDN, "function", "function", "true"}
-                //{"DocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true"},
-                //{"ItemCustomFields", "GetItemCustomFields", PrecoroAPI.GetItemCustomFieldsExpand, "function", "function", "true"}
+                {"Warehouse Requests", "WarehouseRequests", NavTable(a) , "Folder", "Folder", "false", 1},
+                {"Purchase Requisitions", "PurchaseRequisitions", NavTable(b) , "Folder", "Folder", "false", 2},
+                {"Request for Proposals", "RequestForProposals", NavTable(c) , "Folder", "Folder", "false", 3},
+                {"Purchase Orders", "PurchaseOrders", NavTable(d) , "Folder", "Folder", "false", 4},
+                {"Receipts", "Receipts", NavTable(e) , "Folder", "Folder", "false", 5},
+                {"Invoices", "Invoices", NavTable(f) , "Folder", "Folder", "false", 6},
+                {"Payments", "Payments", NavTable(g) , "Folder", "Folder", "false", 7},
+                {"Budgets", "Budgets", NavTable(h) , "Folder", "Folder", "false", 8},
+                {"Inventory", "Inventory", NavTable(i) , "Folder", "Folder", "false", 9},
+                {"Suppliers and Items", "Suppliers and Items", NavTable(o) , "Folder", "Folder", "false", 10},
+                {"Company Payment Terms", "Company Payment Terms", NavTable(p) , "Folder", "Folder", "false", 11},
+                {"Configuration", "Configuration", NavTable(r) , "Folder", "Folder", "false", 12}
+
+                //{"GetDataFromEndpointList", "GetDataFromEndpointList", PrecoroAPI.GetDataFromEndpoint, "function", "function", "true", 13},
+                //{"GetDataFromEndpointByIDN", "GetDataFromEndpointByIDN", PrecoroAPI.GetDataFromEndpointByIDN, "function", "function", "true", 14}
             }   
         )
     in
         NavTable(lv1);
 
-PrecoroAPI.PurchaseOrdersList = Value.ReplaceType(PrecoroAPI.PurchaseOrdersListImpl, PrecoroAPI.PurchaseOrdersType);
-PrecoroAPI.PurchaseOrdersType =
-type function (  
-                      #"createDate[left_date]" as (type date meta [
+endpoints = {
+    "warehouserequests",
+    "purchaserequisitions",
+    "requestforproposals",
+    "purchaseorders",
+    "receipts",
+    "invoices",
+    "payments",
+    "budgets",
+    "stocktransfers",
+    "stock_takings",
+    "suppliers",
+    "units",
+    "categories",
+    "items",
+    "paymentterms",
+    "locations",
+    "users",
+    "itemcustomfields",
+    "documentcustomfields",
+    "legalentities",
+    "warehouses",
+    "taxes"
+    };
+
+
+endpointsIDN = {
+    "warehouserequests",
+    "purchaserequisitions",
+    "requestforproposals",
+    "purchaseorders",
+    "receipts",
+    "invoices"
+    };
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+PrecoroAPI.taxes = Value.ReplaceType(PrecoroAPI.taxesImpl, byListType1("Get Tax list"));
+PrecoroAPI.taxesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("taxes");
+
+PrecoroAPI.warehouses = Value.ReplaceType(PrecoroAPI.warehousesImpl, byListType1("Get Warehouses list"));
+PrecoroAPI.warehousesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("warehouses");
+
+PrecoroAPI.legalentities = Value.ReplaceType(PrecoroAPI.legalentitiesImpl, byListType1("Get Legal Entities list"));
+PrecoroAPI.legalentitiesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("legalentities");
+
+PrecoroAPI.documentcustomfields = Value.ReplaceType(PrecoroAPI.documentcustomfieldsImpl, byListType1("Get Document Сustom Fields list"));
+PrecoroAPI.documentcustomfieldsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("documentcustomfields");
+
+PrecoroAPI.itemcustomfields = Value.ReplaceType(PrecoroAPI.itemcustomfieldsImpl, byListType1("Get Item Сustom Fields list"));
+PrecoroAPI.itemcustomfieldsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("itemcustomfields");
+
+PrecoroAPI.users = Value.ReplaceType(PrecoroAPI.usersImpl, byListType1("Get Users list"));
+PrecoroAPI.usersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("users");
+
+PrecoroAPI.locations = Value.ReplaceType(PrecoroAPI.locationsImpl, byListType1("Get Locations list"));
+PrecoroAPI.locationsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("locations");
+
+PrecoroAPI.paymentterms = Value.ReplaceType(PrecoroAPI.paymenttermsImpl, byListType1("Get Company Payment Terms list"));
+PrecoroAPI.paymenttermsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("paymentterms");
+
+PrecoroAPI.categories = Value.ReplaceType(PrecoroAPI.categoriesImpl, byListType1("Get Categories list"));
+PrecoroAPI.categoriesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("categories");
+
+PrecoroAPI.units = Value.ReplaceType(PrecoroAPI.itemsImpl, byListType1("Get Units list"));
+PrecoroAPI.unitsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("units");
+
+PrecoroAPI.items = Value.ReplaceType(PrecoroAPI.itemsImpl, byListType1("Get Items list"));
+PrecoroAPI.itemsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("items");
+
+PrecoroAPI.suppliers = Value.ReplaceType(PrecoroAPI.suppliersImpl, byListType1("Get Suppliers list"));
+PrecoroAPI.suppliersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("suppliers");
+
+PrecoroAPI.stock_takings = Value.ReplaceType(PrecoroAPI.stock_takingsImpl, byListType1("Get Stock-takings list"));
+PrecoroAPI.stock_takingsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stock_takings");
+
+PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byListType1("Get Stock Transfers list"));
+PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
+
+PrecoroAPI.budgets = Value.ReplaceType(PrecoroAPI.budgetsImpl, byListType2("Get Budgets list"));
+PrecoroAPI.budgetsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date) => PrecoroAPI.GetDataFromEndpoint("budgets", #"createDate[left_date]",  #"createDate[right_date]", false );
+
+PrecoroAPI.payments = Value.ReplaceType(PrecoroAPI.paymentsImpl, byListType("Get Payments list"));
+PrecoroAPI.paymentsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("payments", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+
+PrecoroAPI.invoices = Value.ReplaceType(PrecoroAPI.invoicesImpl, byListType("Get Invoices list"));
+PrecoroAPI.invoicesByIDN = Value.ReplaceType(PrecoroAPI.invoicesByIDNImpl, byListIDNType("Get invoices by IDN"));
+PrecoroAPI.invoicesImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.invoicesByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+PrecoroAPI.receipts = Value.ReplaceType(PrecoroAPI.receiptsImpl, byListType("Get Receipts list"));
+PrecoroAPI.receiptsByIDN = Value.ReplaceType(PrecoroAPI.receiptsByIDNImpl, byListIDNType("Get Receipts by IDN"));
+PrecoroAPI.receiptsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.receiptsByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+PrecoroAPI.purchaseorders = Value.ReplaceType(PrecoroAPI.purchaseordersImpl, byListType("Get Purchase Orders list"));
+PrecoroAPI.purchaseordersByIDN = Value.ReplaceType(PrecoroAPI.purchaseordersByIDNImpl, byListIDNType("Get Purchase Orders by IDN"));
+PrecoroAPI.purchaseordersImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.purchaseordersByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+PrecoroAPI.requestforproposals = Value.ReplaceType(PrecoroAPI.requestforproposalsImpl, byListType("Get Request For Proposals list"));
+PrecoroAPI.requestforproposalsByIDN = Value.ReplaceType(PrecoroAPI.requestforproposalsByIDNImpl, byListIDNType("Get Request For Proposals by IDN"));
+PrecoroAPI.requestforproposalsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.requestforproposalsByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+PrecoroAPI.purchaserequisitions = Value.ReplaceType(PrecoroAPI.purchaserequisitionsImpl, byListType("Get Purchase Requisitions list"));
+PrecoroAPI.purchaserequisitionsByIDN = Value.ReplaceType(PrecoroAPI.purchaserequisitionsByIDNImpl, byListIDNType("Get Purchase Requisitions by IDN"));
+PrecoroAPI.purchaserequisitionsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.purchaserequisitionsByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+PrecoroAPI.warehouserequests = Value.ReplaceType(PrecoroAPI.warehouserequestsImpl, byListType("Get Warehouse Requests list"));
+PrecoroAPI.warehouserequestsByIDN = Value.ReplaceType(PrecoroAPI.warehouserequestsByIDNImpl, byListIDNType("Get Warehouse Requests by IDN"));
+PrecoroAPI.warehouserequestsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.warehouserequestsByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+byListType1 = (nm as text) => type function ()
+        as function meta [
+            Documentation.Name = nm,
+            Documentation.LongDescription = nm
+    ];
+
+byListType2 = (nm as text) => type function (
+                     #"createDate[left_date]" as (type date meta [
                         Documentation.FieldCaption = "createDate[left_date]",
                         Documentation.FieldDescription = "createDate[left_date]"
                         ]),
-                      #"createDate[right_date]" as (type date meta [
+                     #"createDate[right_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[right_date]",
+                        Documentation.FieldDescription = "createDate[right_date]"
+                        ])
+                   )
+        as function meta [
+            Documentation.Name = nm,
+            Documentation.LongDescription = nm
+    ];
+
+byListType = (nm as text) => type function (
+                     #"createDate[left_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[left_date]",
+                        Documentation.FieldDescription = "createDate[left_date]"
+                        ]),
+                     #"createDate[right_date]" as (type date meta [
                         Documentation.FieldCaption = "createDate[right_date]",
                         Documentation.FieldDescription = "createDate[right_date]"
                         ]),
-                     
-                     include_DocumentCustomFields as (type logical meta [
+                     optional include_DocumentCustomFields as (type any meta [
                         Documentation.FieldCaption = "include_DocumentCustomFields",
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
@@ -46,30 +325,95 @@ type function (
                         ])
                    )
         as function meta [
-            Documentation.Name = "PurchaseOrdersList",
-            Documentation.LongDescription = "PurchaseOrdersList"
+            Documentation.Name = nm,
+            Documentation.LongDescription = nm
     ];
 
-
-PrecoroAPI.GetPurchaseOrdersByIDN = Value.ReplaceType(PrecoroAPI.GetPurchaseOrdersByIDNImpl, PrecoroAPI.GetPurchaseOrdersByIDNType);
-PrecoroAPI.GetPurchaseOrdersByIDNType =
-type function (  
-                      #"createDate[left_date]" as (type date meta [
+byListIDNType = (nm as text) => type function (
+                     #"createDate[left_date]" as (type date meta [
                         Documentation.FieldCaption = "createDate[left_date]",
                         Documentation.FieldDescription = "createDate[left_date]"
                         ]),
-                      #"createDate[right_date]" as (type date meta [
+                     #"createDate[right_date]" as (type date meta [
                         Documentation.FieldCaption = "createDate[right_date]",
                         Documentation.FieldDescription = "createDate[right_date]"
                         ]),
-                     
-                     include_DocumentCustomFields as (type logical meta [
+                     optional include_DocumentCustomFields as (type logical meta [
                         Documentation.FieldCaption = "include_DocumentCustomFields",
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
                         ]),
-                     include_ItemsCustomFields as (type logical meta [
+                     optional include_ItemsCustomFields as (type any meta [
+                        Documentation.FieldCaption = "include_ItemsCustomFields",
+                        Documentation.FieldDescription = "include_ItemsCustomFields",
+                        Documentation.SampleValues = {true, false},
+                        Documentation.AllowedValues = {true, false}
+                        ])
+
+                   )
+        as function meta [
+            Documentation.Name = nm,
+            Documentation.LongDescription = nm
+    ];
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+PrecoroAPI.GetDataFromEndpoint = Value.ReplaceType(PrecoroAPI.GetDataFromEndpointImpl, PrecoroAPI.GetDataFromEndpointType);
+PrecoroAPI.GetDataFromEndpointType =
+type function (
+                     endpoint as (type text meta
+                        [
+                        Documentation.FieldCaption = "endpoint",
+                        Documentation.FieldDescription = "endpoint",
+                        Documentation.SampleValues = {"warehouserequests", "purchaserequisitions"},
+                        Documentation.AllowedValues = endpoints
+                        ]
+                     ),
+                     #"createDate[left_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[left_date]",
+                        Documentation.FieldDescription = "createDate[left_date]"
+                        ]),
+                     #"createDate[right_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[right_date]",
+                        Documentation.FieldDescription = "createDate[right_date]"
+                        ]),
+                     optional include_DocumentCustomFields as (type any meta [
+                        Documentation.FieldCaption = "include_DocumentCustomFields",
+                        Documentation.FieldDescription = "include_DocumentCustomFields",
+                        Documentation.SampleValues = {true, false},
+                        Documentation.AllowedValues = {true, false}
+                        ])
+                   )
+        as function meta [
+            Documentation.Name = "GetDataFromEndpoint",
+            Documentation.LongDescription = "GetDataFromEndpoint"
+    ];
+
+PrecoroAPI.GetDataFromEndpointByIDN = Value.ReplaceType(PrecoroAPI.GetDataFromEndpointByIDNImpl, PrecoroAPI.GetDataFromEndpointByIDNType);
+PrecoroAPI.GetDataFromEndpointByIDNType =
+type function (      
+                    endpoint as (type text meta
+                        [
+                        Documentation.FieldCaption = "endpoint",
+                        Documentation.FieldDescription = "endpoint",
+                        Documentation.SampleValues = {"warehouserequests", "purchaserequisitions"},
+                        Documentation.AllowedValues = endpointsIDN
+                        ]),
+                    #"createDate[left_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[left_date]",
+                        Documentation.FieldDescription = "createDate[left_date]"
+                        ]),
+                     #"createDate[right_date]" as (type date meta [
+                        Documentation.FieldCaption = "createDate[right_date]",
+                        Documentation.FieldDescription = "createDate[right_date]"
+                        ]),
+                     optional include_DocumentCustomFields as (type logical meta [
+                        Documentation.FieldCaption = "include_DocumentCustomFields",
+                        Documentation.FieldDescription = "include_DocumentCustomFields",
+                        Documentation.SampleValues = {true, false},
+                        Documentation.AllowedValues = {true, false}
+                        ]),
+                     optional include_ItemsCustomFields as (type logical meta [
                         Documentation.FieldCaption = "include_ItemsCustomFields",
                         Documentation.FieldDescription = "include_ItemsCustomFields",
                         Documentation.SampleValues = {true, false},
@@ -77,18 +421,52 @@ type function (
                         ])
                    )
         as function meta [
-            Documentation.Name = "PurchaseOrdersList",
-            Documentation.LongDescription = "PurchaseOrdersList"
+            Documentation.Name = "GetDataFromEndpointByIDN",
+            Documentation.LongDescription = "GetDataFromEndpointByIDN"
     ];
 
 
-PrecoroAPI.PurchaseOrdersListImpl = (
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+PrecoroAPI.GetDataFromEndpointByIDNImpl = (
+    endpoint as text,
+    #"createDate[left_date]" as date, 
+    #"createDate[right_date]" as date,
+    optional include_DocumentCustomFields as any,
+    optional include_ItemsCustomFields as any
+    ) =>
+        let
+            tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields),
+            tabl_sel_col = Table.SelectColumns(tb, {"idn", "DocumentCustomFields"}, MissingField.UseNull ),
+
+            dCF = if include_DocumentCustomFields is null then false else if include_DocumentCustomFields then true else false,
+
+            tb_detail = Table.TransformRows(tabl_sel_col, each 
+               fCheckNullList( 
+                    if dCF 
+                    then  Record.AddField( PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From([idn]), []), "DocumentCustomFields", _[DocumentCustomFields] )
+                    else  PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From([idn]), [])
+                  )
+               ),
+
+           tb1 = toTable(tb_detail, 1),
+
+           add_items_custom_field = 
+                        if include_ItemsCustomFields is null then tb1 else
+                        if include_ItemsCustomFields then try PrecoroAPI.ItemsWithCustomFields(tb1) otherwise tb1 
+                        else tb1
+        in 
+            add_items_custom_field;
+
+
+PrecoroAPI.GetDataFromEndpointImpl = (
+    endpoint as text,
     #"createDate[left_date]" as date, 
     #"createDate[right_date]" as date, 
-    include_DocumentCustomFields as logical
+    optional include_DocumentCustomFields as any
     ) =>
     let
-        endpoint = "purchaseorders",
+        endpoint = endpoint,
         p = [
             #"createDate[left_date]" = Date.ToText(#"createDate[left_date]", "dd.MM.yyyy"), 
             #"createDate[right_date]" = Date.ToText(#"createDate[right_date]", "dd.MM.yyyy")
@@ -111,48 +489,48 @@ PrecoroAPI.PurchaseOrdersListImpl = (
             )
             ),
         tb = toTable(tb1, 1),
-        ExpDocCustomFields = Table.ExpandRecordColumn(tb, "dataDocumentCustomFields", {"data"}, {"dataDocumentCustomFields.data"}),
 
-        merge_custom_field = 
+        incCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
+
+        ExpDocCustomFields = 
+            if incCF 
+            then 
+                try 
+                    PrecoroAPI.DocumentWithCustomFields(
+                        Table.ExpandRecordColumn(tb, "dataDocumentCustomFields", {"data"}, {"dataDocumentCustomFields.data"})
+                        )
+                otherwise tb
+            else tb
+    in
+        ExpDocCustomFields;
+
+
+PrecoroAPI.GetDataFromEndpoint1Impl = (
+    endpoint as text
+    ) =>
+    let
+        endpoint = endpoint,
+        p = [],
+        
+        fn = (pg as number) => 
             let 
-                a = 
-                    if include_DocumentCustomFields 
-                    then try PrecoroAPI.GetPurchaseOrdersWithCustomFields(ExpDocCustomFields)  otherwise ExpDocCustomFields 
-                    else ExpDocCustomFields
-            in a
+                add_page_to_p = Record.AddField(p, "page", Text.From(pg)),
+                data = PrecoroAPI.GetData(endpoint, add_page_to_p)
+            in
+                data,
+        tb1 =
+           List.Combine(
+            List.Generate( 
+                ()=> [ x = 1 , y = fn(1)],
+                each [x] <= Number.From([y][meta][pagination][total_pages]), //not(List.IsEmpty([y])),
+                each [ x=[x] + 1, y = fn(x) ],
+                each List.Transform( [y][data], each fCheckNullList(_) )
+            )
+            ),
+        tb = toTable(tb1, 1)
 
     in
-        merge_custom_field;
-
-
-
-PrecoroAPI.GetPurchaseOrdersByIDNImpl = (
-    #"createDate[left_date]" as date, 
-    #"createDate[right_date]" as date,
-    include_DocumentCustomFields as logical,
-    include_ItemsCustomFields as logical
-    ) =>
-        let
-            orders = PrecoroAPI.PurchaseOrdersList(#"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields),
-            tabl_sel_col = Table.SelectColumns(orders, {"idn", "DocumentCustomFields"}, MissingField.UseNull),
-            detail_orders = Table.TransformRows(tabl_sel_col, each 
-               fCheckNullList( Record.AddField( PrecoroAPI.GetData( "purchaseorders/" & Text.From([idn]), []), "DocumentCustomFields", _[DocumentCustomFields] ) )
-               ),
-
-            tb = toTable(detail_orders, 1),
-
-            
-        add_items_custom_field = 
-            let 
-                a = 
-                    if include_ItemsCustomFields 
-                    then try PrecoroAPI.GetPurchaseOrdersWithCustomFieldsItems(tb) otherwise tb 
-                    else tb
-            in a
-
-        in 
-            add_items_custom_field;
-
+        tb;
 
 PrecoroAPI.GetDocumentCustomFields = () =>
     let
@@ -224,14 +602,13 @@ PrecoroAPI.GetItemCustomFieldsExpand = () =>
         #"Expanded options.data1" = Table.ExpandRecordColumn(#"Expanded options.data", "options.data", {"id", "name", "code", "label", "level", "parent", "externalId", "enable"}, {"options.data.id", "options.data.name", "options.data.code", "options.data.label", "options.data.level", "options.data.parent", "options.data.externalId", "options.data.enable"}),
         #"Expanded options.data.parent" = Table.ExpandRecordColumn(#"Expanded options.data1", "options.data.parent", {"id"}, {"options.data.parent.id"}),
         #"Changed Type" = Table.TransformColumnTypes(#"Expanded options.data.parent",{{"id", Int64.Type}, {"options.data.id", Text.Type},{"options.data.parent.id", Int64.Type}}),
-        to_buf = Table.Buffer(#"Changed Type"),
-        #"Invoked Custom Function" = Table.AddColumn(to_buf, "Hierarchy", each  if [type]=1 then pChild(to_buf, [options.data.id], [id], []) else null)
+        #"Invoked Custom Function" = Table.AddColumn(#"Changed Type", "Hierarchy", each  if [type]=1 then pChild(#"Changed Type", [options.data.id], [id], []) else null)
 in
     #"Invoked Custom Function";
 
 
 
-PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
+PrecoroAPI.DocumentWithCustomFields = (doc_tb as table) =>
     let
         cf_dim = PrecoroAPI.GetDocumentCustomFields(),
         doc = doc_tb,
@@ -244,7 +621,7 @@ PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
         add_key_val = Table.AddColumn( #"Changed Type", "CustomFields.value_key", each if [CustomFields.type]=1 then [CustomFields.value] else null ),
         #"Merged Queries" = Table.NestedJoin(add_key_val, {"CustomFields.documentCustomField.id", "CustomFields.value_key"}, cf_dim, {"id", "options.data.id"}, "Invoked Function", JoinKind.LeftOuter),
 
-        //select_step
+        // select_step
 
         #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "Invoked Function", {"name", "options.data.name", "options.data.code", "Hierarchy"}, {"name", "options.data.name", "options.data.code", "Hierarchy"}),
         #"Added Custom" = 
@@ -266,29 +643,34 @@ PrecoroAPI.GetPurchaseOrdersWithCustomFields = (doc_tb as table) =>
     in
         exp_tb;
 
-PrecoroAPI.GetPurchaseOrdersWithCustomFieldsItems = (doc_tb as table) =>
+PrecoroAPI.ItemsWithCustomFields = (doc_tb as table) =>
 let
-    #"Invoked FunctionGetPurchaseOrdersByIDN1" = doc_tb,
-    cf_dim = PrecoroAPI.GetItemCustomFieldsExpand(),
-    cf_dim0 = PrecoroAPI.GetItemCustomFields(),
+    #"Invoked FunctionGetPurchaseOrdersByIDN1" = Table.Buffer(doc_tb),
+    cf_dim = Table.Buffer(PrecoroAPI.GetItemCustomFieldsExpand()),
+    cf_dim0 = Table.Buffer(PrecoroAPI.GetItemCustomFields()),
     #"Removed Other Columns" = Table.SelectColumns(#"Invoked FunctionGetPurchaseOrdersByIDN1",{"id", "items"}),
     #"Expanded items" = Table.ExpandRecordColumn(#"Removed Other Columns", "items", {"data"}, {"items.data"}),
-    #"Expanded items.data" = Table.ExpandListColumn(#"Expanded items", "items.data"),
-    #"Duplicated Column" = Table.DuplicateColumn(#"Expanded items.data", "items.data", "items.data - Copy"),
-    #"Expanded items.data1" = Table.ExpandRecordColumn(#"Duplicated Column", "items.data", {"id", "dataProductCustomFields"}, {"items.data.id", "items.data.dataProductCustomFields"}),
-    #"Expanded items.data.dataProductCustomFields" = Table.ExpandRecordColumn(#"Expanded items.data1", "items.data.dataProductCustomFields", {"data"}, {"items.data.dataProductCustomFields.data"}),
-    #"Expanded items.data.dataProductCustomFields.data" = Table.ExpandListColumn(#"Expanded items.data.dataProductCustomFields", "items.data.dataProductCustomFields.data"),
-    #"Expanded items.data.dataProductCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data", "items.data.dataProductCustomFields.data", {"value", "productCustomField"}, {"ProductCustomFields.value", "ProductCustomFields.productCustomField"}),
-    #"Expanded ProductCustomFields.productCustomField" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data1", "ProductCustomFields.productCustomField", {"id"}, {"productCustomField.id"}),
-    #"Changed Type" = Table.TransformColumnTypes(#"Expanded ProductCustomFields.productCustomField",{{"ProductCustomFields.value", Text.Type}, {"productCustomField.id", Int64.Type}}),
-    
-    #"Merged Type" = Table.NestedJoin(#"Changed Type", {"productCustomField.id"}, cf_dim0, {"id"}, "ItemCustomFieldsType", JoinKind.LeftOuter),
-    #"ExpandedType" = Table.ExpandTableColumn(#"Merged Type", "ItemCustomFieldsType", {"type"}, {"ProductCustomFields.type"}),
-    #"Changed Type1" = Table.TransformColumnTypes( #"ExpandedType",{{"ProductCustomFields.type", Int64.Type}}),
-    add_key_val = Table.AddColumn(#"Changed Type1", "ProductCustomFields.value_key", each if [ProductCustomFields.type]=1 then [ProductCustomFields.value] else null ),
-    #"Changed Type2" = Table.TransformColumnTypes( add_key_val,{{"ProductCustomFields.value_key", Text.Type}}),
 
-    #"Merged Queries" = Table.NestedJoin(#"Changed Type2", {"productCustomField.id", "ProductCustomFields.value_key"}, cf_dim, {"id", "options.data.id"}, "ItemCustomFields", JoinKind.LeftOuter),
+    #"transformNullToEmptyRecords" = Table.TransformColumns(#"Expanded items", {"items.data", (v)=> if List.IsEmpty(v) then {[]} else v }),
+
+    #"Expanded items.data" = Table.ExpandListColumn( #"transformNullToEmptyRecords", "items.data"),
+    
+    
+    #"Duplicated Column" = Table.DuplicateColumn(#"Expanded items.data", "items.data", "items.data - Copy"),
+    #"Expanded items.data1" = Table.ExpandRecordColumn(#"Duplicated Column", "items.data", {"id", "dataItemCustomFields"}, {"items.data.id", "items.data.dataItemCustomFields"}),
+    #"Expanded items.data.dataProductCustomFields" = Table.ExpandRecordColumn(#"Expanded items.data1", "items.data.dataItemCustomFields", {"data"}, {"items.data.dataItemCustomFields.data"}),
+    #"Expanded items.data.dataProductCustomFields.data" = Table.ExpandListColumn(#"Expanded items.data.dataProductCustomFields", "items.data.dataItemCustomFields.data"),
+    #"Expanded items.data.dataProductCustomFields.data1" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data", "items.data.dataItemCustomFields.data", {"value", "itemCustomField"}, {"ItemCustomFields.value", "ItemCustomFields.ItemCustomField"}),
+    #"Expanded ProductCustomFields.productCustomField" = Table.ExpandRecordColumn(#"Expanded items.data.dataProductCustomFields.data1", "ItemCustomFields.ItemCustomField", {"id"}, {"ItemCustomField.id"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded ProductCustomFields.productCustomField",{{"ItemCustomFields.value", Text.Type}, {"ItemCustomField.id", Int64.Type}}),
+    
+    #"Merged Type" = Table.NestedJoin(#"Changed Type", {"ItemCustomField.id"}, cf_dim0, {"id"}, "ItemCustomFieldsType", JoinKind.LeftOuter),
+    #"ExpandedType" = Table.ExpandTableColumn(#"Merged Type", "ItemCustomFieldsType", {"type"}, {"ItemCustomFields.type"}),
+    #"Changed Type1" = Table.TransformColumnTypes( #"ExpandedType",{{"ItemCustomFields.type", Int64.Type}}),
+    add_key_val = Table.AddColumn(#"Changed Type1", "ItemCustomFields.value_key", each if [ItemCustomFields.type]=1 then [ItemCustomFields.value] else null ),
+    #"Changed Type2" = Table.TransformColumnTypes( add_key_val,{{"ItemCustomFields.value_key", Text.Type}}),
+
+    #"Merged Queries" = Table.NestedJoin(#"Changed Type2", {"ItemCustomField.id", "ItemCustomFields.value_key"}, cf_dim, {"id", "options.data.id"}, "ItemCustomFields", JoinKind.LeftOuter),
     #"Expanded Invoked Function" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"name", "options.data.name", "options.data.code", "Hierarchy"}, {"name", "options.data.name", "options.data.code", "Hierarchy"}),
     
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -297,14 +679,9 @@ let
     #"Added CustomField" = 
         Table.AddColumn(#"Expanded Invoked Function", "CustomField", 
           each
-               if [ProductCustomFields.value_key] is null 
-               then Record.AddField([], [name], [ProductCustomFields.value] )
-               else
-               Record.AddField([],
-                    //Record.AddField(
-                        //Record.AddField([], [name] & "_Code", [options.data.code]),
-                    //[name] & "_Name", [options.data.name]),
-               [name] & "_Hierarchy", [Hierarchy])
+               if [ItemCustomFields.value_key] is null 
+               then Record.AddField([], [name], [ItemCustomFields.value] )
+               else Record.AddField([], [name] & "_Hierarchy", [Hierarchy] )
         ),
                
     //#"Expanded ItemCustomFields" = Table.ExpandTableColumn(#"Merged Queries", "ItemCustomFields", {"CustomField"}, {"CustomField"}),
@@ -342,6 +719,7 @@ PrecoroAPI.GetData = (endpoint as text, optional params as record) =>
 
 // Data Source Kind description
 PrecoroAPI = [
+    TestConnection = (dataSourcePath) => {"PrecoroAPI.NavTableNested"},
     Authentication = [
         // Key = [],
         UsernamePassword = [UsernameLabel = "email", PasswordLabel = "X-AUTH-TOKEN"],
@@ -388,17 +766,19 @@ Table.ToNavigationTable = (
     dataColumn as text,
     itemKindColumn as text,
     itemNameColumn as text,
-    isLeafColumn as text
+    isLeafColumn as text,
+    sort as text
 ) as table =>
     let
         tableType = Value.Type(table),
         newTableType = Type.AddTableKey(tableType, keyColumns, true) meta 
-        [
+        [   
             NavigationTable.NameColumn = nameColumn, 
             NavigationTable.DataColumn = dataColumn,
             NavigationTable.ItemKindColumn = itemKindColumn, 
             Preview.DelayColumn = itemNameColumn, 
-            NavigationTable.IsLeafColumn = isLeafColumn
+            NavigationTable.IsLeafColumn = isLeafColumn,
+            NavigationTable.sort = sort
         ],
         navigationTable = Value.ReplaceType(table, newTableType)
     in
@@ -413,7 +793,13 @@ fCheckNullList = (rec as record) =>
                 {"approvalStep", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
                 {"approvingWay", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
                 {"lastApprover", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
-                {"lastEditor",   each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ }
+                {"lastEditor",   each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"purchaseOrder", each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"warehouse",    each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"location",    each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"egalEntity",    each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ },
+                {"exchangeRate",    each if Value.Type(_) = List.Type then if List.IsEmpty(_) then [] else _ else _ }
+                 
             }
             ,MissingField.Ignore )
     in
