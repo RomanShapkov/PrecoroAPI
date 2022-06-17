@@ -63,21 +63,23 @@ shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
       
        i0 = #table(table_header, 
             {
-                {"Stock Transfers", "stocktransfers", PrecoroAPI.stocktransfers, "function", "function", "true", 1}
+                {"Stock Transfers", "stocktransfers", PrecoroAPI.stocktransfers, "function", "function", "true", 1},
+                {"Get Stock Transfer by ID", "stocktransfersByID", PrecoroAPI.stocktransfersByID, "function", "function", "true", 2}
              }),
 
         
        i = #table(table_header, 
             {
                 {"Inventory", "Inventory ", NavTable(i0), "Table", "Table", "false", 1},
-                {"Get Stock-takings list", "stock_takings ", PrecoroAPI.stock_takings, "function", "function", "true", 2}
-                // {"Get Budgets list", "budgets ", PrecoroAPI.budgets, "function", "function", "true", 3}
-
+                {"Get Stock-takings list", "stock_takings ", PrecoroAPI.stock_takings, "function", "function", "true", 2},
+                {"Get Stock-taking by ID", "stock_takingsByID ", PrecoroAPI.stock_takingsByID, "function", "function", "true", 4},
+                {"Get Warehouse Items", "warehousesItemsByWarehouseID ", PrecoroAPI.warehousesItemsByWarehouseID, "function", "function", "true", 5}
              }),
 //
        o1 = #table(table_header, 
             {
-                {"Get Suppliers list", "Get Suppliers list", PrecoroAPI.suppliers, "function", "function", "true", 1}
+                {"Get Suppliers list", "Get Suppliers list", PrecoroAPI.suppliers, "function", "function", "true", 1},
+                {"Get Supplier by ID", "Get Supplier by ID", PrecoroAPI.suppliersByID, "function", "function", "true", 2}
 
              }),
 
@@ -123,7 +125,8 @@ shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
              }),
        r5 = #table(table_header, 
             {
-                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1}
+                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1},
+                {"Get Legal Entity by ID", "legalentitiesByID ", PrecoroAPI.legalentitiesByID, "function", "function", "true", 2}
 
              }),
        r6 = #table(table_header, 
@@ -208,11 +211,25 @@ endpointsIDN = {
     };
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+PrecoroAPI.warehousesItemsByWarehouseID = Value.ReplaceType(PrecoroAPI.warehousesItemsByWarehouseIDImpl, byListIDNType("Get Tax list"));
+PrecoroAPI.warehousesItemsByWarehouseIDImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => 
+    let 
+        Source = PrecoroAPI.GetDataFromEndpointByIDN("warehouses",  #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", "/items"),
+        #"Removed Other Columns" = Table.SelectColumns(Source,{"data"}),
+        #"Expanded data" = Table.ExpandListColumn(#"Removed Other Columns", "data"),
+        #"Expanded data1" = Table.ExpandRecordColumn(#"Expanded data", "data", {"id", "warehouse", "quantity", "mainItem", "taxes"}, {"id", "warehouse", "quantity", "mainItem", "taxes"}),
+        #"Filtered Rows" = Table.SelectRows(#"Expanded data1", each ([id] <> null))
+    in
+        #"Filtered Rows";
+
 PrecoroAPI.taxes = Value.ReplaceType(PrecoroAPI.taxesImpl, byListType1("Get Tax list"));
 PrecoroAPI.taxesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("taxes");
 
 PrecoroAPI.warehouses = Value.ReplaceType(PrecoroAPI.warehousesImpl, byListType1("Get Warehouses list"));
 PrecoroAPI.warehousesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("warehouses");
+
+PrecoroAPI.legalentitiesByID = Value.ReplaceType(PrecoroAPI.legalentitiesByIDImpl, byListIDNType("Get Legal Entities by ID"));
+PrecoroAPI.legalentitiesByIDImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("legalentities", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
 
 PrecoroAPI.legalentities = Value.ReplaceType(PrecoroAPI.legalentitiesImpl, byListType1("Get Legal Entities list"));
 PrecoroAPI.legalentitiesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("legalentities");
@@ -241,11 +258,20 @@ PrecoroAPI.unitsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("units");
 PrecoroAPI.items = Value.ReplaceType(PrecoroAPI.itemsImpl, byListType1("Get Items list"));
 PrecoroAPI.itemsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("items");
 
+PrecoroAPI.suppliersByID = Value.ReplaceType(PrecoroAPI.suppliersByIDImpl, byListIDNType("Get Supplier by ID"));
+PrecoroAPI.suppliersByIDImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("suppliers", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+
 PrecoroAPI.suppliers = Value.ReplaceType(PrecoroAPI.suppliersImpl, byListType1("Get Suppliers list"));
 PrecoroAPI.suppliersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("suppliers");
 
+PrecoroAPI.stock_takingsByID = Value.ReplaceType(PrecoroAPI.stock_takingsByIDImpl, byListIDNType("Get Stock-takings by ID"));
+PrecoroAPI.stock_takingsByIDImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("stock_takings", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+
 PrecoroAPI.stock_takings = Value.ReplaceType(PrecoroAPI.stock_takingsImpl, byListType1("Get Stock-takings list"));
 PrecoroAPI.stock_takingsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stock_takings");
+
+PrecoroAPI.stocktransfersByID = Value.ReplaceType(PrecoroAPI.stocktransfersByIDImpl, byListIDNType("Get stocktransfers by ID"));
+PrecoroAPI.stocktransfersByIDImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("stocktransfers", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
 
 PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byListType1("Get Stock Transfers list"));
 PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
@@ -418,8 +444,17 @@ type function (
                         Documentation.FieldDescription = "include_ItemsCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
+                        ]),
+                     optional id_for_iteration as (type text meta [
+                        Documentation.FieldCaption = "id_for_iteration",
+                        Documentation.FieldDescription = "id_for_iteration",
+                        Documentation.SampleValues = {"idn", "id"}
+                        ]),
+                    optional endpoint2 as (type text meta [
+                        Documentation.FieldCaption = "endpoint2",
+                        Documentation.FieldDescription = "endpoint2"
                         ])
-                   )
+           )
         as function meta [
             Documentation.Name = "GetDataFromEndpointByIDN",
             Documentation.LongDescription = "GetDataFromEndpointByIDN"
@@ -433,19 +468,23 @@ PrecoroAPI.GetDataFromEndpointByIDNImpl = (
     #"createDate[left_date]" as date, 
     #"createDate[right_date]" as date,
     optional include_DocumentCustomFields as any,
-    optional include_ItemsCustomFields as any
+    optional include_ItemsCustomFields as any,
+    optional id_for_iteration as text, // указать наименование поля для итераций, по умолчанию "idn"
+    optional endpoint2 as text
     ) =>
         let
+            id_name = if id_for_iteration is null then "idn" else "id",
+            e2 = if endpoint2 is null then "" else endpoint2,
             tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields),
-            tabl_sel_col = Table.SelectColumns(tb, {"idn", "DocumentCustomFields"}, MissingField.UseNull ),
+            tabl_sel_col = Table.SelectColumns(tb, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
 
             dCF = if include_DocumentCustomFields is null then false else if include_DocumentCustomFields then true else false,
 
             tb_detail = Table.TransformRows(tabl_sel_col, each 
                fCheckNullList( 
                     if dCF 
-                    then  Record.AddField( PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From([idn]), []), "DocumentCustomFields", _[DocumentCustomFields] )
-                    else  PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From([idn]), [])
+                    then  Record.AddField( PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From( Record.Field(_, id_for_iteration)  ) & Text.From(e2) , []), "DocumentCustomFields", _[DocumentCustomFields] )
+                    else  PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From( Record.Field(_, id_for_iteration) ) & Text.From(e2), [])
                   )
                ),
 
@@ -819,3 +858,5 @@ pChild = (tb as table, parent_id as any, id as any, res as record) =>
                     
     in
          if parent_id is null then res else @pChild(tb, next_parent, id, res_);
+
+
