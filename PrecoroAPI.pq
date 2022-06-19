@@ -169,7 +169,8 @@ shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
                 {"Configuration", "Configuration", NavTable(r) , "Folder", "Folder", "false", 12}
 
                 //{"GetDataFromEndpointList", "GetDataFromEndpointList", PrecoroAPI.GetDataFromEndpoint, "function", "function", "true", 13},
-                //{"GetDataFromEndpointByIDN", "GetDataFromEndpointByIDN", PrecoroAPI.GetDataFromEndpointByIDN, "function", "function", "true", 14}
+                //,{"GetDocumentCustomFields", "GetDocumentCustomFields", PrecoroAPI.GetDocumentCustomFields, "function", "function", "true", 14}
+                
             }   
         )
     in
@@ -276,8 +277,31 @@ PrecoroAPI.stocktransfersByIDImpl = (#"createDate[left_date]" as date, #"createD
 PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byListType1("Get Stock Transfers list"));
 PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
 
-PrecoroAPI.budgets = Value.ReplaceType(PrecoroAPI.budgetsImpl, byListType2("Get Budgets list"));
-PrecoroAPI.budgetsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date) => PrecoroAPI.GetDataFromEndpoint("budgets", #"createDate[left_date]",  #"createDate[right_date]", false );
+PrecoroAPI.budgets = Value.ReplaceType(PrecoroAPI.budgetsImpl, byListIDNType("Get Budgets list"));
+PrecoroAPI.budgetsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => 
+    let
+        Source = PrecoroAPI.GetDataFromEndpoint("budgets", #"createDate[left_date]",  #"createDate[right_date]", false ),
+        dCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
+        resTb = 
+            let
+                #"Changed Type" = Table.TransformColumnTypes(Source,{{"allDocumentCustomFieldIds", Int64.Type}}),
+                #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"allDocumentCustomFieldIds"}, PrecoroAPI.GetDocumentCustomFields(), {"id"}, "DCF", JoinKind.LeftOuter),
+                fnGetDCF = Table.AddColumn(#"Merged Queries", "DocumentCustomFields", each fnCFBudget([DCF], [allDocumentCustomFieldOptionsIds])),
+                removeCl = Table.RemoveColumns(fnGetDCF, {"DCF"})
+            in 
+                removeCl,
+        resTb1 = if dCF then resTb else Source,
+        iCF = if include_ItemsCustomFields is null then false else include_ItemsCustomFields,
+        resTb2 = 
+            let
+                #"Changed Type" = Table.TransformColumnTypes(resTb1,{{"allItemCustomFieldIds", Int64.Type}}),
+                #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"allItemCustomFieldIds"}, PrecoroAPI.GetItemCustomFieldsExpand(), {"id"}, "ICF", JoinKind.LeftOuter),
+                fnGetDCF = Table.AddColumn(#"Merged Queries", "ItemCustomFields", each fnCFBudget([ICF], [allItemCustomFieldOptionsIds])),
+                removeCl = Table.RemoveColumns(fnGetDCF, {"ICF"})
+            in 
+                removeCl
+    in
+        if iCF then resTb2 else resTb1;
 
 PrecoroAPI.payments = Value.ReplaceType(PrecoroAPI.paymentsImpl, byListType("Get Payments list"));
 PrecoroAPI.paymentsImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("payments", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
@@ -859,4 +883,24 @@ pChild = (tb as table, parent_id as any, id as any, res as record) =>
     in
          if parent_id is null then res else @pChild(tb, next_parent, id, res_);
 
+/*
+fnCFBudget = 
+    (tb as table, filter as text) =>
+        let
+            values = Text.Split(filter, ","),
+            tbRes = Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
+            tbSelCol = Table.SelectColumns( tbRes, {"Hierarchy"} )
+        in
+            tbSelCol[Hierarchy];
+*/
+
+fnCFBudget = 
+    (tb as table, filter as any) =>
+        let
+            fiSTR = if filter is null then "" else filter,
+            values = Text.Split(fiSTR, ","),
+            tbRes = Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
+            tbSelCol = Table.AddColumn( Table.SelectColumns( tbRes, {"options.data.id", "Hierarchy"} ), "rec", each Record.AddField([],[options.data.id], [Hierarchy]))
+        in
+            Record.Combine(tbSelCol[rec]);
 
