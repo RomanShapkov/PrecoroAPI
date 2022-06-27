@@ -8,7 +8,7 @@ apikey = Extension.CurrentCredential()[Password];
 
 [DataSource.Kind="PrecoroAPI", Publish="PrecoroAPI.Publish"]
 
-shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
+shared Precoro.Company = (#"Company name" as text) as table =>
     let
 
         NavTable = (tb as table) => Table.ToNavigationTable(tb, {"Name"}, "Name", "Data", "ItemKind", "ItemName", "IsLeaf", "sort") ,
@@ -125,8 +125,8 @@ shared PrecoroAPI.NavTableNested = (#"Company name" as text) as table =>
              }),
        r5 = #table(table_header, 
             {
-                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1}
-                //{"Get Legal Entity by ID", "legalentitiesByID ", PrecoroAPI.legalentitiesByID, "function", "function", "true", 2}
+                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1},
+                {"Get Legal Entity by ID", "legalentitiesByID ", PrecoroAPI.legalentitiesByID, "function", "function", "true", 2}
 
              }),
        r6 = #table(table_header, 
@@ -786,7 +786,7 @@ PrecoroAPI.GetData = (endpoint as text, optional params as record) =>
 
 // Data Source Kind description
 PrecoroAPI = [
-    TestConnection = (dataSourcePath) => {"PrecoroAPI.NavTableNested"},
+    TestConnection = (dataSourcePath) => { "Precoro.Company", Json.Document(dataSourcePath)[Company name] },
     Authentication = [
         // Key = [],
         UsernamePassword = [UsernameLabel = "email", PasswordLabel = "X-AUTH-TOKEN"],
@@ -903,7 +903,7 @@ fnCFBudget =
         let
             fiSTR = if filter is null then "" else filter,
             values = Text.Split(fiSTR, ","),
-            tbRes = Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
+            tbRes = if filter is null then tb else Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
             tbSelCol = Table.AddColumn( Table.SelectColumns( tbRes, {"options.data.id", "Hierarchy"} ), "rec", each Record.AddField([],[options.data.id], [Hierarchy]))
         in
             Record.Combine(tbSelCol[rec]);
