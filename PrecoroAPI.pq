@@ -335,7 +335,7 @@ PrecoroAPI.purchaserequisitionsByIDNImpl = (optional #"createDate[left_date]" as
 PrecoroAPI.warehouserequests = Value.ReplaceType(PrecoroAPI.warehouserequestsImpl, byListType("Get Warehouse Requests list"));
 PrecoroAPI.warehouserequestsByIDN = Value.ReplaceType(PrecoroAPI.warehouserequestsByIDNImpl, byListIDNType("Get Warehouse Requests by IDN"));
 PrecoroAPI.warehouserequestsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.warehouserequestsByIDNImpl = (#"createDate[left_date]" as date, #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.warehouserequestsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 byListType1 = (nm as text) => type function ()
@@ -389,7 +389,7 @@ byListIDNType = (nm as text) => type function (
                         Documentation.FieldCaption = "createDate[right_date]",
                         Documentation.FieldDescription = "createDate[right_date]"
                         ]),
-                     optional include_DocumentCustomFields as (type logical meta [
+                     optional include_DocumentCustomFields as (type any meta [
                         Documentation.FieldCaption = "include_DocumentCustomFields",
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
@@ -458,13 +458,13 @@ type function (
                         Documentation.FieldCaption = "createDate[right_date]",
                         Documentation.FieldDescription = "createDate[right_date]"
                         ]),
-                     optional include_DocumentCustomFields as (type logical meta [
+                     optional include_DocumentCustomFields as (type any meta [
                         Documentation.FieldCaption = "include_DocumentCustomFields",
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
                         ]),
-                     optional include_ItemsCustomFields as (type logical meta [
+                     optional include_ItemsCustomFields as (type any meta [
                         Documentation.FieldCaption = "include_ItemsCustomFields",
                         Documentation.FieldDescription = "include_ItemsCustomFields",
                         Documentation.SampleValues = {true, false},
