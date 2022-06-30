@@ -293,16 +293,69 @@ PrecoroAPI.budgetsImpl = (optional #"createDate[left_date]" as date, optional #"
                 removeCl,
         resTb1 = if dCF then resTb else Source,
         iCF = if include_ItemsCustomFields is null then false else include_ItemsCustomFields,
-        resTb2 = 
+        
+        /*resTb2 = 
             let
                 #"Changed Type" = Table.TransformColumnTypes(resTb1,{{"allItemCustomFieldIds", Int64.Type}}),
                 #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"allItemCustomFieldIds"}, PrecoroAPI.GetItemCustomFieldsExpand(), {"id"}, "ICF", JoinKind.LeftOuter),
                 fnGetDCF = Table.AddColumn(#"Merged Queries", "ItemCustomFields", each fnCFBudget([ICF], [allItemCustomFieldOptionsIds])),
                 removeCl = Table.RemoveColumns(fnGetDCF, {"ICF"})
             in 
-                removeCl
+                removeCl*/
+        
+        resTb3 = 
+            let
+                    a =
+                        let
+                            b = 
+                                let
+                                    #"Removed Other Columns" = Table.SelectColumns(resTb1,{"children", "id"}),
+                                    #"Expanded children" = Table.ExpandRecordColumn(#"Removed Other Columns", "children", {"data"}, {"children.data"}),
+                                    #"Expanded children.data" = Table.ExpandListColumn(#"Expanded children", "children.data"),
+                                    #"Duplicated Column" = Table.DuplicateColumn(#"Expanded children.data", "children.data", "children.data2"),
+                                    #"Expanded children.data1" = Table.ExpandRecordColumn(#"Duplicated Column", "children.data2", {"allItemCustomFieldIds", "allItemCustomFieldOptionsIds", "allDocumentCustomFieldIds", "allDocumentCustomFieldOptionsIds"}, {"children.data.allItemCustomFieldIds", "children.data.allItemCustomFieldOptionsIds", "children.data.allDocumentCustomFieldIds", "children.data.allDocumentCustomFieldOptionsIds"})
+                                in
+                                    #"Expanded children.data1",
+                            c =
+                                let
+                                    #"Changed Type" = Table.TransformColumnTypes(b,{{"children.data.allItemCustomFieldIds", Int64.Type}}),
+                                    #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"children.data.allItemCustomFieldIds"}, PrecoroAPI.GetItemCustomFieldsExpand(), {"id"}, "ICF", JoinKind.LeftOuter),
+                                    fnGetDCF = Table.AddColumn(#"Merged Queries", "ItemCustomFields", each fnCFBudget([ICF], [children.data.allItemCustomFieldOptionsIds])),
+                                    removeCl = Table.RemoveColumns(fnGetDCF, {"ICF"})
+                                in
+                                    if iCF then removeCl else b
+                         in
+                             c,
+
+                    docCF = 
+                        let
+                            #"Changed Type" = Table.TransformColumnTypes(a,{{"children.data.allDocumentCustomFieldIds", Int64.Type}}),
+                            #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"children.data.allDocumentCustomFieldIds"}, PrecoroAPI.GetDocumentCustomFields(), {"id"}, "DCF", JoinKind.LeftOuter),
+                            fnGetDCF = Table.AddColumn(#"Merged Queries", "DocumentCustomFields", each fnCFBudget([DCF], [children.data.allDocumentCustomFieldOptionsIds])),
+                            removeCl5 = Table.RemoveColumns(fnGetDCF, {"DCF"})
+                        in 
+                            if dCF then removeCl5 else a,
+
+
+                    //#"Added Custom" = Table.AddColumn(#"Expanded children.data1", "ICS", each []),
+                    //#"Added Custom1" = Table.AddColumn(removeCl, "DCF", each []),
+
+                    b = 
+                        let
+                            #"Added Custom2" = Table.AddColumn(docCF, "data1", each if [children.data] is null then [children.data] else if iCF then Record.AddField( [children.data], "ItemCustomFields", [ItemCustomFields]) else [children.data]),
+                            #"Added Custom3" = Table.AddColumn(#"Added Custom2", "children", each if [data1] is null then [data1] else if dCF then Record.AddField( [data1], "DocumentCustomFields", [DocumentCustomFields]) else [data1]),
+                            #"Removed Other Columns1" = Table.SelectColumns(#"Added Custom3",{"children", "id"}),
+                            #"Grouped Rows" = Table.Group(#"Removed Other Columns1", {"id"}, { {"children", each _[children], type list } } ),
+                            tbChildre = Table.TransformColumns(#"Grouped Rows", {{"children", each [data = _]} }),
+                            merge = Table.NestedJoin( resTb1, {"id"}, tbChildre, {"id"}, "dataCF",  JoinKind.LeftOuter),
+                            #"Removed Columns" = Table.RemoveColumns(merge,{"children"}),
+                            #"Expanded dataCF" = Table.ExpandTableColumn(#"Removed Columns", "dataCF", {"children"}, {"children"})
+                        in
+                            #"Expanded dataCF"
+            in
+                b   
     in
-        if iCF then resTb2 else resTb1;
+        if iCF or dCF then resTb3 else resTb1;
 
 PrecoroAPI.payments = Value.ReplaceType(PrecoroAPI.paymentsImpl, byListType("Get Payments list"));
 PrecoroAPI.paymentsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("payments", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
