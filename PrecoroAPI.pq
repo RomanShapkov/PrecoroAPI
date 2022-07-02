@@ -272,8 +272,8 @@ PrecoroAPI.stock_takingsByIDImpl = (optional #"createDate[left_date]" as date, o
 PrecoroAPI.stock_takings = Value.ReplaceType(PrecoroAPI.stock_takingsImpl, byListType1("Get Stock-takings list"));
 PrecoroAPI.stock_takingsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stock_takings");
 
-PrecoroAPI.stocktransfersByID = Value.ReplaceType(PrecoroAPI.stocktransfersByIDImpl, byListIDNType("Get stocktransfers by ID"));
-PrecoroAPI.stocktransfersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("stocktransfers", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+PrecoroAPI.stocktransfersByID = Value.ReplaceType(PrecoroAPI.stocktransfersByIDImpl, byListType2("Get stocktransfers by ID"));
+PrecoroAPI.stocktransfersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date) => PrecoroAPI.GetDataFromEndpointByIDN("stocktransfers", #"createDate[left_date]",  #"createDate[right_date]", null, null,  "id");
 
 PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byListType1("Get Stock Transfers list"));
 PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
@@ -769,7 +769,6 @@ let
     cf_dim0 = Table.Buffer(PrecoroAPI.GetItemCustomFields()),
     #"Removed Other Columns" = Table.SelectColumns(#"Invoked FunctionGetPurchaseOrdersByIDN1",{"id", "items"}),
     #"Expanded items" = Table.ExpandRecordColumn(#"Removed Other Columns", "items", {"data"}, {"items.data"}),
-
     #"transformNullToEmptyRecords" = Table.TransformColumns(#"Expanded items", {"items.data", (v)=> if List.IsEmpty(v) then {[]} else v }),
 
     #"Expanded items.data" = Table.ExpandListColumn( #"transformNullToEmptyRecords", "items.data"),
