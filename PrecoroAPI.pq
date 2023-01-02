@@ -214,9 +214,9 @@ endpointsIDN = {
 
 
 PrecoroAPI.warehousesItemsByWarehouseID = Value.ReplaceType(PrecoroAPI.warehousesItemsByWarehouseIDImpl, byListIDNType("Get Warehouse Items"));
-PrecoroAPI.warehousesItemsByWarehouseIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => 
+PrecoroAPI.warehousesItemsByWarehouseIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => 
     let 
-        Source = PrecoroAPI.GetDataFromEndpointByIDN("warehouses",  #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", "/items"),
+        Source = PrecoroAPI.GetDataFromEndpointByIDN("warehouses",  #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", "/items", #"modifiedSince"),
         #"Removed Other Columns" = Table.SelectColumns(Source,{"data"}),
         #"Expanded data" = Table.ExpandListColumn(#"Removed Other Columns", "data"),
         #"Expanded data1" = Table.ExpandRecordColumn(#"Expanded data", "data", {"id", "warehouse", "quantity", "mainItem", "taxes"}, {"id", "warehouse", "quantity", "mainItem", "taxes"}),
@@ -231,7 +231,7 @@ PrecoroAPI.warehouses = Value.ReplaceType(PrecoroAPI.warehousesImpl, byListType1
 PrecoroAPI.warehousesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("warehouses");
 
 PrecoroAPI.legalentitiesByID = Value.ReplaceType(PrecoroAPI.legalentitiesByIDImpl, byListIDNType("Get Legal Entities by ID"));
-PrecoroAPI.legalentitiesByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("legalentities", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+PrecoroAPI.legalentitiesByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("legalentities", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", null, #"modifiedSince");
 
 PrecoroAPI.legalentities = Value.ReplaceType(PrecoroAPI.legalentitiesImpl, byListType1("Get Legal Entities list"));
 PrecoroAPI.legalentitiesImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("legalentities");
@@ -261,19 +261,19 @@ PrecoroAPI.items = Value.ReplaceType(PrecoroAPI.itemsImpl, byListType1("Get Item
 PrecoroAPI.itemsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("items");
 
 PrecoroAPI.suppliersByID = Value.ReplaceType(PrecoroAPI.suppliersByIDImpl, byListIDNType("Get Supplier by ID"));
-PrecoroAPI.suppliersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("suppliers", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+PrecoroAPI.suppliersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("suppliers", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", null, #"modifiedSince");
 
 PrecoroAPI.suppliers = Value.ReplaceType(PrecoroAPI.suppliersImpl, byListType1("Get Suppliers list"));
 PrecoroAPI.suppliersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("suppliers");
 
 PrecoroAPI.stock_takingsByID = Value.ReplaceType(PrecoroAPI.stock_takingsByIDImpl, byListIDNType("Get Stock-takings by ID"));
-PrecoroAPI.stock_takingsByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("stock_takings", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id");
+PrecoroAPI.stock_takingsByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("stock_takings", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, "id", null, #"modifiedSince");
 
 PrecoroAPI.stock_takings = Value.ReplaceType(PrecoroAPI.stock_takingsImpl, byListType1("Get Stock-takings list"));
 PrecoroAPI.stock_takingsImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stock_takings");
 
 PrecoroAPI.stocktransfersByID = Value.ReplaceType(PrecoroAPI.stocktransfersByIDImpl, byListType2("Get stocktransfers by ID"));
-PrecoroAPI.stocktransfersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date) => PrecoroAPI.GetDataFromEndpointByIDN("stocktransfers", #"createDate[left_date]",  #"createDate[right_date]", null, null,  "id");
+PrecoroAPI.stocktransfersByIDImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("stocktransfers", #"createDate[left_date]",  #"createDate[right_date]", null, null,  "id", null, #"modifiedSince");
 
 PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byListType1("Get Stock Transfers list"));
 PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
@@ -358,37 +358,37 @@ PrecoroAPI.budgetsImpl = (optional #"createDate[left_date]" as date, optional #"
         if iCF or dCF then resTb3 else resTb1;
 
 PrecoroAPI.payments = Value.ReplaceType(PrecoroAPI.paymentsImpl, byListType("Get Payments list"));
-PrecoroAPI.paymentsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("payments", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
+PrecoroAPI.paymentsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("payments", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
 
 PrecoroAPI.invoices = Value.ReplaceType(PrecoroAPI.invoicesImpl, byListType("Get Invoices list"));
 PrecoroAPI.invoicesByIDN = Value.ReplaceType(PrecoroAPI.invoicesByIDNImpl, byListIDNType("Get invoices by IDN"));
-PrecoroAPI.invoicesImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.invoicesByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.invoicesImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.invoicesByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("invoices", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 PrecoroAPI.receipts = Value.ReplaceType(PrecoroAPI.receiptsImpl, byListType("Get Receipts list"));
 PrecoroAPI.receiptsByIDN = Value.ReplaceType(PrecoroAPI.receiptsByIDNImpl, byListIDNType("Get Receipts by IDN"));
-PrecoroAPI.receiptsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.receiptsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.receiptsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.receiptsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("receipts", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 PrecoroAPI.purchaseorders = Value.ReplaceType(PrecoroAPI.purchaseordersImpl, byListType("Get Purchase Orders list"));
 PrecoroAPI.purchaseordersByIDN = Value.ReplaceType(PrecoroAPI.purchaseordersByIDNImpl, byListIDNType("Get Purchase Orders by IDN"));
-PrecoroAPI.purchaseordersImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.purchaseordersByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.purchaseordersImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.purchaseordersByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("purchaseorders", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 PrecoroAPI.requestforproposals = Value.ReplaceType(PrecoroAPI.requestforproposalsImpl, byListType("Get Request For Proposals list"));
 PrecoroAPI.requestforproposalsByIDN = Value.ReplaceType(PrecoroAPI.requestforproposalsByIDNImpl, byListIDNType("Get Request For Proposals by IDN"));
-PrecoroAPI.requestforproposalsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.requestforproposalsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.requestforproposalsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.requestforproposalsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("requestforproposals", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 PrecoroAPI.purchaserequisitions = Value.ReplaceType(PrecoroAPI.purchaserequisitionsImpl, byListType("Get Purchase Requisitions list"));
 PrecoroAPI.purchaserequisitionsByIDN = Value.ReplaceType(PrecoroAPI.purchaserequisitionsByIDNImpl, byListIDNType("Get Purchase Requisitions by IDN"));
-PrecoroAPI.purchaserequisitionsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.purchaserequisitionsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.purchaserequisitionsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.purchaserequisitionsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("purchaserequisitions", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 PrecoroAPI.warehouserequests = Value.ReplaceType(PrecoroAPI.warehouserequestsImpl, byListType("Get Warehouse Requests list"));
 PrecoroAPI.warehouserequestsByIDN = Value.ReplaceType(PrecoroAPI.warehouserequestsByIDNImpl, byListIDNType("Get Warehouse Requests by IDN"));
-PrecoroAPI.warehouserequestsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any) => PrecoroAPI.GetDataFromEndpoint("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any );
-PrecoroAPI.warehouserequestsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => PrecoroAPI.GetDataFromEndpointByIDN("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields );
+PrecoroAPI.warehouserequestsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpoint("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields as any, #"modifiedSince" );
+PrecoroAPI.warehouserequestsByIDNImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => PrecoroAPI.GetDataFromEndpointByIDN("warehouserequests", #"createDate[left_date]",  #"createDate[right_date]", include_DocumentCustomFields, include_ItemsCustomFields, null, null, #"modifiedSince" );
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 byListType1 = (nm as text) => type function ()
@@ -405,6 +405,10 @@ byListType2 = (nm as text) => type function (
                      optional #"createDate[right_date]" as (type date meta [
                         Documentation.FieldCaption = "createDate[right_date]",
                         Documentation.FieldDescription = "createDate[right_date]"
+                        ]),
+                     optional #"modifiedSince" as (type datetime meta [
+                        Documentation.FieldCaption = "modifiedSince",
+                        Documentation.FieldDescription = "modifiedSince"
                         ])
                    )
         as function meta [
@@ -426,6 +430,10 @@ byListType = (nm as text) => type function (
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
+                        ]),
+                     optional #"modifiedSince" as (type datetime meta [
+                        Documentation.FieldCaption = "modifiedSince",
+                        Documentation.FieldDescription = "modifiedSince"
                         ])
                    )
         as function meta [
@@ -453,6 +461,10 @@ byListIDNType = (nm as text) => type function (
                         Documentation.FieldDescription = "include_ItemsCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
+                        ]),
+                     optional #"modifiedSince" as (type datetime meta [
+                        Documentation.FieldCaption = "modifiedSince",
+                        Documentation.FieldDescription = "modifiedSince"
                         ])
 
                    )
@@ -486,6 +498,10 @@ type function (
                         Documentation.FieldDescription = "include_DocumentCustomFields",
                         Documentation.SampleValues = {true, false},
                         Documentation.AllowedValues = {true, false}
+                        ]),
+                     optional #"modifiedSince" as (type datetime meta [
+                        Documentation.FieldCaption = "modifiedSince",
+                        Documentation.FieldDescription = "modifiedSince"
                         ])
                    )
         as function meta [
@@ -531,6 +547,10 @@ type function (
                     optional endpoint2 as (type text meta [
                         Documentation.FieldCaption = "endpoint2",
                         Documentation.FieldDescription = "endpoint2"
+                        ]),
+                     optional #"modifiedSince" as (type datetime meta [
+                        Documentation.FieldCaption = "modifiedSince",
+                        Documentation.FieldDescription = "modifiedSince"
                         ])
            )
         as function meta [
@@ -548,12 +568,13 @@ PrecoroAPI.GetDataFromEndpointByIDNImpl = (
     optional include_DocumentCustomFields as any,
     optional include_ItemsCustomFields as any,
     optional id_for_iteration as text, // указать наименование поля для итераций, по умолчанию "idn"
-    optional endpoint2 as text
+    optional endpoint2 as text,
+    optional #"modifiedSince" as datetime
     ) =>
         let
             id_name = if id_for_iteration is null then "idn" else "id",
             e2 = if endpoint2 is null then "" else endpoint2,
-            tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields),
+            tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields, #"modifiedSince"),
             tabl_sel_col = Table.SelectColumns(tb, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
 
             dCF = if include_DocumentCustomFields is null then false else if include_DocumentCustomFields then true else false,
@@ -580,7 +601,8 @@ PrecoroAPI.GetDataFromEndpointImpl = (
     endpoint as text,
     optional #"createDate[left_date]" as date, 
     optional #"createDate[right_date]" as date, 
-    optional include_DocumentCustomFields as any
+    optional include_DocumentCustomFields as any,
+    optional #"modifiedSince" as datetime
     ) =>
     let
         endpoint = endpoint,
@@ -588,9 +610,10 @@ PrecoroAPI.GetDataFromEndpointImpl = (
             let
                 dt2 = if #"createDate[right_date]" is null then Date.From(DateTime.LocalNow()) else #"createDate[right_date]",
                 b = add_rec([], "createDate[left_date]", Date.ToText(#"createDate[left_date]", "dd.MM.yyyy")), 
-                c = add_rec(b, "createDate[right_date]", Date.ToText(dt2, "dd.MM.yyyy"))
+                c = add_rec(b, "createDate[right_date]", Date.ToText(dt2, "dd.MM.yyyy")),
+                d = add_rec(c, "modifiedSince", DateTime.ToText(#"modifiedSince", "yyyy-MM-ddTHH:mm:ss"))
             in 
-                c,
+                d,
         
         fn = (pg as number) => 
             let 
