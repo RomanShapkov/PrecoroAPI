@@ -279,9 +279,9 @@ PrecoroAPI.stocktransfers = Value.ReplaceType(PrecoroAPI.stocktransfersImpl, byL
 PrecoroAPI.stocktransfersImpl = () => PrecoroAPI.GetDataFromEndpoint1Impl("stocktransfers");
 
 PrecoroAPI.budgets = Value.ReplaceType(PrecoroAPI.budgetsImpl, byListIDNType("Get Budgets list"));
-PrecoroAPI.budgetsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any) => 
+PrecoroAPI.budgetsImpl = (optional #"createDate[left_date]" as date, optional #"createDate[right_date]" as date, optional include_DocumentCustomFields as any, optional include_ItemsCustomFields as any, optional #"modifiedSince" as datetime) => 
     let
-        Source = PrecoroAPI.GetDataFromEndpoint("budgets", #"createDate[left_date]",  #"createDate[right_date]", false ),
+        Source = PrecoroAPI.GetDataFromEndpoint("budgets", #"createDate[left_date]",  #"createDate[right_date]", false, #"modifiedSince" ),
         dCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
         resTb = 
             let
