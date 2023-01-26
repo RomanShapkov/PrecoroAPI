@@ -125,8 +125,8 @@ shared Precoro.Company = (#"Company name" as text) as table =>
              }),
        r5 = #table(table_header, 
             {
-                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1},
-                {"Get Legal Entity by ID", "legalentitiesByID ", PrecoroAPI.legalentitiesByID, "function", "function", "true", 2}
+                {"Get Legal Entities list", "legalentities ", PrecoroAPI.legalentities, "function", "function", "true", 1}
+                //{"Get Legal Entity by ID", "legalentitiesByID ", PrecoroAPI.legalentitiesByID, "function", "function", "true", 2}
 
              }),
        r6 = #table(table_header, 
@@ -638,7 +638,7 @@ PrecoroAPI.GetDataFromEndpointByIDNImpl = (
     optional #"modifiedSince" as datetime
     ) =>
         let
-            id_name = if id_for_iteration is null then "idn" else "id",
+            id_name = if id_for_iteration is null then "idn" else id_for_iteration,
             e2 = if endpoint2 is null then "" else endpoint2,
             tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields, #"modifiedSince"),
             tabl_sel_col = Table.SelectColumns(tb, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
