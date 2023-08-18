@@ -285,9 +285,12 @@ PrecoroAPI.budgetsImpl = (optional #"createDate[left_date]" as date, optional #"
         dCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
         resTb = 
             let
-                #"Changed Type" = Table.TransformColumnTypes(Source,{{"allDocumentCustomFieldIds", Int64.Type}}),
-                #"Merged Queries" = Table.NestedJoin(#"Changed Type", {"allDocumentCustomFieldIds"}, PrecoroAPI.GetDocumentCustomFields(), {"id"}, "DCF", JoinKind.LeftOuter),
-                fnGetDCF = Table.AddColumn(#"Merged Queries", "DocumentCustomFields", each fnCFBudget([DCF], [allDocumentCustomFieldOptionsIds])),
+
+                //#"Changed Type" = Table.TransformColumnTypes(Source,{{"allDocumentCustomFieldIds", Int64.Type}}),
+                //#"Merged Queries" = Table.NestedJoin(#"Changed Type", {"allDocumentCustomFieldIds"}, PrecoroAPI.GetDocumentCustomFields(), {"id"}, "DCF", JoinKind.LeftOuter),
+                dcf_tb = Table.Buffer(PrecoroAPI.GetDocumentCustomFields()),
+                addDCF  = Table.AddColumn(Source, "DCF", each dcf_tb),
+                fnGetDCF = Table.AddColumn(addDCF, "DocumentCustomFields", each fnCFBudget([DCF], [allDocumentCustomFieldOptionsIds])),
                 removeCl = Table.RemoveColumns(fnGetDCF, {"DCF"})
             in 
                 removeCl,
@@ -1044,8 +1047,9 @@ fnCFBudget =
         let
             fiSTR = if filter is null then "" else filter,
             values = Text.Split(fiSTR, ","),
-            tbRes = if filter is null then tb else Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
-            tbSelCol = Table.AddColumn( Table.SelectColumns( tbRes, {"options.data.id", "Hierarchy"} ), "rec", each Record.AddField([],[options.data.id], [Hierarchy]))
+            //tbRes = if filter is null then tb else Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
+            tbRes = Table.SelectRows(tb, each List.Contains(values, [options.data.id]) ),
+            tbSelCol = Table.AddColumn( Table.SelectColumns( tbRes, {"name", "options.data.id", "Hierarchy"} ), "rec", each Record.AddField([],[name], [Hierarchy]))
         in
             Record.Combine(tbSelCol[rec]);
 
