@@ -644,9 +644,21 @@ PrecoroAPI.GetDataFromEndpointByIDNImpl = (
             id_name = if id_for_iteration is null then "idn" else id_for_iteration,
             e2 = if endpoint2 is null then "" else endpoint2,
             tb = PrecoroAPI.GetDataFromEndpoint(endpoint, #"createDate[left_date]", #"createDate[right_date]", include_DocumentCustomFields, #"modifiedSince"),
-            tabl_sel_col = Table.SelectColumns(tb, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
+            tb_sampl = Table.FirstN(PrecoroAPI.GetDataFromEndpointImpl_sampledata(endpoint, null, null, include_DocumentCustomFields, null),1),
 
+            tabl_sel_col = Table.SelectColumns(tb, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
+            tabl_sel_col_sample = Table.SelectColumns(tb_sampl, {id_name, "DocumentCustomFields"}, MissingField.UseNull ),
+            
             dCF = if include_DocumentCustomFields is null then false else if include_DocumentCustomFields then true else false,
+
+
+            tb_detail_sample = Table.TransformRows(tabl_sel_col_sample, each 
+               //fCheckNullList( 
+                    if dCF 
+                    then  Record.AddField( PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From( Record.Field(_, id_name)  ) & Text.From(e2) , []), "DocumentCustomFields", _[DocumentCustomFields] )
+                    else  PrecoroAPI.GetData( Text.From(endpoint) & "/" & Text.From( Record.Field(_, id_name) ) & Text.From(e2), [])
+                  //)
+               ),
 
             tb_detail = Table.TransformRows(tabl_sel_col, each 
                //fCheckNullList( 
@@ -656,7 +668,9 @@ PrecoroAPI.GetDataFromEndpointByIDNImpl = (
                   //)
                ),
 
-           tb1 = toTable(tb_detail, 1),
+
+
+           tb1 = toTable(tb_detail, 1, tb_detail_sample),
 
            add_items_custom_field = 
                         if include_ItemsCustomFields is null then tb1 else
@@ -686,10 +700,21 @@ PrecoroAPI.GetDataFromEndpointImpl = (
         
         fn = (pg as number) => 
             let 
-                add_page_to_p = Record.AddField(p, "page", Text.From(pg)),
+                add_page_to_p = if pg=0 then [] else Record.AddField(p, "page", Text.From(pg)),
                 data = PrecoroAPI.GetData(endpoint, add_page_to_p)
             in
-                data,
+                data, 
+
+        fields_name_row = 
+           List.Combine(
+                    List.Generate( 
+                        ()=> [ x = 0 , y = fn(0)],
+                        each [x] < 1, //not(List.IsEmpty([y])),
+                        each [ x=[x] + 1, y = fn(x) ],
+                        each List.Transform( [y][data], each _ )//fCheckNullList(_) )
+                    )
+                    ),
+        
         tb1 =
            List.Combine(
             List.Generate( 
@@ -699,7 +724,51 @@ PrecoroAPI.GetDataFromEndpointImpl = (
                 each List.Transform( [y][data], each _ )//fCheckNullList(_) )
             )
             ),
-        tb = toTable(tb1, 1),
+        
+        tb = toTable(tb1, 1, fields_name_row),
+
+        incCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
+
+        ExpDocCustomFields = 
+            if incCF 
+            then 
+                try 
+                    PrecoroAPI.DocumentWithCustomFields(
+                        Table.ExpandRecordColumn(tb, "dataDocumentCustomFields", {"data"}, {"dataDocumentCustomFields.data"})
+                        )
+                otherwise tb
+            else tb
+    in
+        ExpDocCustomFields;
+
+
+PrecoroAPI.GetDataFromEndpointImpl_sampledata = (
+    endpoint as text,
+    optional #"createDate[left_date]" as date, 
+    optional #"createDate[right_date]" as date, 
+    optional include_DocumentCustomFields as any,
+    optional #"modifiedSince" as datetime
+    ) =>
+    let
+        endpoint = endpoint,
+        
+        fn = (pg as number) => 
+            let 
+                data = PrecoroAPI.GetData(endpoint, [])
+            in
+                data, 
+
+        fields_name_row = 
+           List.Combine(
+                    List.Generate( 
+                        ()=> [ x = 0 , y = fn(0)],
+                        each [x] < 1, //not(List.IsEmpty([y])),
+                        each [ x=[x] + 1, y = fn(x) ],
+                        each List.Transform( [y][data], each _ )//fCheckNullList(_) )
+                    )
+                    ),
+ 
+        tb = toTable(fields_name_row, 1, fields_name_row),
 
         incCF = if include_DocumentCustomFields is null then false else include_DocumentCustomFields,
 
@@ -923,7 +992,8 @@ PrecoroAPI.GetData = (endpoint as text, optional params as record) =>
     let
         url = Uri.Combine(baseurl, endpoint),
         h = [#"X-AUTH-TOKEN" = apikey, #"email" = userid],
-        bn = Web.Contents(url, [Headers = h, Query = params, ManualCredentials = true]),
+        p = Record.AddField(params, "fromPowerBI","1"),
+        bn = Web.Contents(url, [Headers = h, Query = p, ManualCredentials = true]),
         json = replaceEmptyListToEmptyRecord(bn)
     in
         json;
@@ -956,16 +1026,17 @@ PrecoroAPI.Icons = [
 ];
 
 
-toTable = (lstrec as list, optional index as number) as table =>
+toTable = (lstrec as list, optional index as number, optional filds_name_sample as list) as table =>
     let
         fieldnames = 
             let
-                toprows = if index is null then lstrec else List.FirstN(lstrec, index),
+                list_combo = if filds_name_sample is null then lstrec else List.Combine( {filds_name_sample, lstrec} ),    
+                toprows = if index is null then list_combo else List.FirstN(list_combo, index),
                 listfields = List.Transform(toprows, Record.FieldNames),
                 namesdistinct = List.Union(listfields)
             in
                 namesdistinct,
-        tbl = Table.FromRecords(lstrec, fieldnames, MissingField.UseNull)
+        tbl = Table.FromRecords( lstrec, fieldnames, MissingField.UseNull)
     in
         tbl;
 
